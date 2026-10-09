@@ -15,16 +15,22 @@ export interface DemoPageRow {
   lang: 'en' | 'ru' | 'kk'
   description: string
   cta: string | null
+  content: unknown
   expires_at: string | null
   created_at: string
 }
 
 export async function getDemoPage(slug: string): Promise<DemoPageRow | null> {
   const { url, headers } = cfg()
-  const res = await fetch(
-    `${url}/rest/v1/demo_pages?slug=eq.${encodeURIComponent(slug)}&select=slug,source,source_id,lang,description,cta,expires_at,created_at&limit=1`,
-    { headers, signal: AbortSignal.timeout(5000) },
-  )
+  const base = 'slug,source,source_id,lang,description,cta,expires_at,created_at'
+  const get = (cols: string) =>
+    fetch(`${url}/rest/v1/demo_pages?slug=eq.${encodeURIComponent(slug)}&select=${cols}&limit=1`, {
+      headers,
+      signal: AbortSignal.timeout(5000),
+    })
+  let res = await get(base + ',content')
+  // Migration 003 not run yet → the `content` column doesn't exist; old pages still work without it.
+  if (res.status === 400) res = await get(base)
   if (!res.ok) throw new Error(`Supabase ${res.status}`)
   const rows = (await res.json()) as DemoPageRow[]
   return rows[0] ?? null

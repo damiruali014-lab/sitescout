@@ -290,3 +290,30 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - **Chains score lower:** 3+ branches gives −15, with the reason "decisions are usually made centrally". A single barbershop owner decides on the spot; a 17-branch chain has a head office. A new **"Hide chains (3+ branches)"** filter is in the toolbar.
 - Cards show "Chain · 17 branches · +3 more in this search", and the lead page lists the other addresses.
 - 3 new tests built from the real Astana response (36 total).
+
+---
+
+## Step 14 — From "landing page text" to a real demo website
+
+**Prompt:** "I thought it would generate a demo version of the website itself, but it just shows a description for a landing page. It's not that good."
+
+**What was wrong:** the builder only showed a text box. The actual page appeared only after publishing, so it felt like generating a paragraph, not a website. The page itself was also thin: a hero plus an About text.
+
+**What I built:**
+- **A complete one-page website** (`DemoSite`):
+  - sticky header with logo initial and booking button;
+  - hero with category, name, tagline, rating and CTAs;
+  - "Why customers choose us" (3 highlights);
+  - About plus "What we offer" (services);
+  - a big rating block with a link to the reviews;
+  - hours and location cards;
+  - a coloured "Ready to visit?" band and footer.
+  It's always light, with **a palette per kind of business**: amber for cafés, rose for beauty, teal-blue for clinics, indigo for schools…
+- **Live preview inside the builder:** the website renders in a browser-style frame on the lead page *before* publishing, plus a "Full-screen preview" that opens `/p/preview`.
+- **AI writes the whole site's copy**, not one paragraph: tagline, about, 3 highlights, 4–6 typical services and the button text, as JSON. The JSON is sanitised field by field, with template fallbacks. Facts (rating, address, hours, phone) still come live from 2GIS/Google; only my reviewed copy is stored (`content jsonb`, migration 003).
+- **Editable:** every text field can be changed and the preview updates instantly. The note reminds me to check services against the business's Instagram/2GIS before publishing.
+- **Backwards compatible:** pages published earlier still render, using their description as "About". If migration 003 hasn't been run, the public page still loads and publishing shows a clear message.
+- In Demo mode, portfolio visitors see the full website preview immediately.
+- 3 new tests (39 total). The e2e test passes, and the page has no horizontal scroll at 360 px.
+
+**Gotcha:** the preview put a second `<h1>` on the lead page. That's bad for accessibility, and it broke my e2e locator. In the preview, the business name is now styled text instead of a heading.
