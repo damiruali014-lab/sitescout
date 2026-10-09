@@ -19,6 +19,8 @@ export interface SearchState {
   filter: SiteFilter
   sort: SortKey
   minRating: number
+  /** Published demo page URL per business key */
+  pages: Record<string, string>
 }
 
 export type SiteFilter = 'all' | 'none' | 'poor' | 'ok'
@@ -35,6 +37,7 @@ const initial: SearchState = {
   filter: 'all',
   sort: 'score',
   minRating: 0,
+  pages: {},
   ...readSession<Partial<SearchState>>(KEY),
 }
 initial.loading = false

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { LeadCard } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -23,7 +24,7 @@ export function SearchPage() {
   const s = useSearchState()
   const [city, setCity] = useState(s.city)
   const [category, setCategory] = useState(s.category)
-  const [selected, setSelected] = useState<string>()
+  const navigate = useNavigate()
 
   // Check every new result's website automatically (homepage only, batched).
   useEffect(() => {
@@ -217,8 +218,7 @@ export function SearchPage() {
                 <LeadCard
                   key={b.key}
                   business={b}
-                  selected={selected === b.key}
-                  onSelect={() => setSelected(b.key)}
+                  onSelect={() => navigate(`/lead/${encodeURIComponent(b.key)}`)}
                   aside={
                     <div className="badges">
                       <ScoreBadge score={score} />

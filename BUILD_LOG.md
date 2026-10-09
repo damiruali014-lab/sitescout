@@ -100,3 +100,24 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 **What went wrong / surprises:**
 - The list re-sorts while website checks are still landing, so cards move around for a second. I kept it because it shows the ranking happening live. If it gets annoying, the fix is to sort only once all checks are done.
 - On a 360 px screen, the score and status badges squeezed the business name. Below 480 px they now wrap under the name.
+
+---
+
+## Step 5 — Demo landing page + shareable link
+
+**Prompt:** "For a chosen lead, generate a one-page demo landing page (name, category, address, hours, phone, rating, a short AI-written description and a call-to-action) with a shareable link I can send to the owner."
+
+**What I built:**
+- **Lead page** `/lead/:key`. It shows why the lead scored what it did, the website-check details with a re-check button, and contacts and hours. Then the demo-page builder.
+- **Public landing page** `/p/:slug`, shown in EN/RU/KK. It has a hero (category, name, rating), CTA buttons (book/call, WhatsApp, directions), an About text, hours and location cards, and a footer CTA back to me. It's styled with the same tokens, so dark mode works there too.
+- **Honesty built in:** every page has a top bar saying it's a concept preview made by me and *not* the business's official site. It carries `noindex` (both a meta tag and the `X-Robots-Tag` header from `vercel.json`) and expires after 60 days.
+- **AI description** (`/api/describe`): one Claude Haiku call with a short system prompt. It may use only the facts given (name, category, address, rating); no invented services, prices or awards. I can edit the text before publishing. If the AI isn't configured, it falls back to a template.
+- **Storage that respects Google's terms:** `demo_pages` stores the slug, provider + ID, language and *my* text. `/api/page` reads the row with the service-role key and re-fetches the business details live (`api/_lib/details.ts`, cached 10 min).
+- **View counter:** a `security definer` SQL function bumps `views` and `last_viewed_at` when someone opens the page, so I'll know when an owner opened my link. My own visits while logged in don't count.
+- SQL migration: `supabase/migrations/001_demo_pages.sql`, with RLS so only I can create or see my pages from the browser.
+- **Demo mode:** links like `/p/demo-alm-1-ru` rebuild the page from bundled sample data, so portfolio visitors can open and share them. The CTA buttons are inert there, so nobody dials a fake 555 number.
+
+**What went wrong / surprises:**
+- The new React lint rule `set-state-in-effect` flagged my first version of the data loading. I refactored: demo data is now *derived during render* (`useMemo`), and the effect only handles the remote fetch.
+- Opening a lead straight from a link showed "Not checked", because checks only ran on the search page. The lead page now runs the check for that one lead.
+- The Kazakh UI strings and templates are my best effort; **they need a native-speaker review.**

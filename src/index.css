@@ -588,3 +588,239 @@ main {
     justify-content: flex-start;
   }
 }
+
+/* ─── Lead page ─── */
+.stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stack-xs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-decoration: none;
+  width: fit-content;
+}
+.back-link:hover {
+  color: var(--text);
+}
+.lead-head {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.lead-head h1 {
+  overflow-wrap: anywhere;
+}
+.lead-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+@media (min-width: 880px) {
+  .lead-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+  .contact-card {
+    position: sticky;
+    top: 72px;
+  }
+}
+.reasons {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+}
+.details {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.details dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 550;
+}
+.details dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.quote {
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.92rem;
+}
+.select-sm {
+  width: auto;
+  height: 30px;
+  font-size: 0.82rem;
+  padding: 0 8px;
+}
+.link-line {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ─── Public demo landing page (/p/:slug) ─── */
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.landing-empty {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.landing-wrap {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.landing-preview-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.landing-hero {
+  padding: 56px 0 40px;
+  background:
+    radial-gradient(1200px 400px at 50% -100px, var(--accent-soft), transparent 70%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.landing-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.landing-hero h1 {
+  font-size: clamp(2rem, 7vw, 3.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin: 8px 0 12px;
+  overflow-wrap: anywhere;
+}
+.landing-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.landing-rating svg {
+  color: var(--warn);
+}
+.landing-rating strong {
+  color: var(--text);
+}
+.landing-ctas {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-lg {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 0.95rem;
+}
+.btn[aria-disabled='true'] {
+  cursor: default;
+}
+.landing-body {
+  padding-top: 40px;
+  padding-bottom: 48px;
+  display: grid;
+  gap: 32px;
+}
+.landing-body h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.landing-desc {
+  font-size: 1.1rem;
+  line-height: 1.65;
+  max-width: 62ch;
+}
+.landing-cols {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 640px) {
+  .landing-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.landing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.landing-card p {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.landing-hours {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.landing-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 20px 0 28px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: grid;
+  gap: 4px;
+}
+.landing-footer .landing-wrap {
+  display: grid;
+  gap: 6px;
+}
