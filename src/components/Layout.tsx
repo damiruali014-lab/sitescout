@@ -1,10 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { isEmbed, OWNER_NAME, PORTFOLIO_URL } from '../lib/config'
+import { forceDemo, isEmbed, OWNER_NAME, PORTFOLIO_URL, supabaseConfigured } from '../lib/config'
+import { useMode } from '../lib/modeContext'
+import { supabase } from '../lib/supabase'
 import { useTheme } from '../lib/theme'
 import { MoonIcon, SunIcon } from './Icons'
 
 export function Layout() {
   const [theme, setTheme] = useTheme()
+  const { session } = useMode()
   const isDark =
     theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
@@ -21,6 +24,14 @@ export function Layout() {
               Search
             </NavLink>
             <NavLink to="/tracker">Tracker</NavLink>
+            {supabaseConfigured && !forceDemo &&
+              (session ? (
+                <button type="button" className="btn btn-ghost btn-sm nav-btn" onClick={() => supabase?.auth.signOut()}>
+                  Log out
+                </button>
+              ) : (
+                <NavLink to="/login">Log in</NavLink>
+              ))}
             <button
               type="button"
               className="btn btn-ghost icon-btn"

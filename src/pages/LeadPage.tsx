@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { scoreLead } from '../../api/_lib/score'
 import { DemoPageCard } from '../components/DemoPageCard'
 import { MessageCard } from '../components/MessageCard'
+import { TrackerCard } from '../components/TrackerCard'
 import { ArrowLeftIcon, ClockIcon, ExternalIcon, GlobeIcon, PhoneIcon, PinIcon } from '../components/Icons'
 import { Rating } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -12,6 +13,7 @@ import { displayHost } from '../lib/format'
 import { useMode } from '../lib/modeContext'
 import { useSearchState } from '../lib/searchStore'
 import { useBusiness } from '../lib/useBusiness'
+import { useTracker, type LeadInput } from '../lib/tracker'
 
 export function LeadPage() {
   const { key = '' } = useParams()
@@ -20,6 +22,9 @@ export function LeadPage() {
   const live = mode === 'live' && !key.startsWith('demo:')
   const { business: b, loading, error } = useBusiness(key, s.lang, live)
   const check = s.checks[key]
+  const tracker = useTracker(live)
+  const tracked = tracker.leads.find((l) => l.key === key)
+  const [justSent, setJustSent] = useState(false)
 
   // Opened directly (e.g. from the tracker)? Run the website check for this one lead.
   useEffect(() => {
@@ -38,6 +43,14 @@ export function LeadPage() {
     )
 
   const score = scoreLead(b, check)
+  const snapshot: LeadInput = {
+    source: b.source,
+    sourceId: b.sourceId,
+    score: score.score,
+    siteStatus: check && check !== 'pending' ? check.status : undefined,
+    searchCity: s.city || undefined,
+    searchCategory: s.category || undefined,
+  }
 
   return (
     <div className="stack">
@@ -84,9 +97,23 @@ export function LeadPage() {
             )}
           </section>
 
-          <DemoPageCard business={b} live={live} />
+          <DemoPageCard
+            business={b}
+            live={live}
+            onPublished={(_url, slug) => (tracked ? tracker.update(tracked.id, { demoSlug: slug }) : tracker.save({ ...snapshot, demoSlug: slug }))}
+          />
 
-          <MessageCard business={b} check={check} live={live} />
+          <MessageCard business={b} check={check} live={live} onSent={() => setJustSent(true)} />
+
+          <TrackerCard
+            tracked={tracked}
+            snapshot={snapshot}
+            justSent={justSent}
+            live={live}
+            onSave={(input) => void tracker.save(input)}
+            onUpdate={(id, patch) => void tracker.update(id, patch)}
+            onDismissSent={() => setJustSent(false)}
+          />
         </div>
 
         <aside className="card stack-sm contact-card" aria-labelledby="contact-h">

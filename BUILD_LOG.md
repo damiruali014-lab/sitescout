@@ -142,3 +142,31 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 **What went wrong / surprises:**
 - In a column layout, the segmented channel picker stretched to full width. I fixed it with `align-self: flex-start`.
 - The first draft wrapped the Copy button in a `<span onClick>` to log "sent". I replaced it with a proper `onCopied` callback, which is more accessible and is also what the tracker uses next.
+
+---
+
+## Step 7 — Login + lead tracker
+
+**Prompt:** "Save leads with status (new → contacted → replied → won / lost), notes and last-contact date. Protect the tracker with my login."
+
+**What I built:**
+- `supabase/migrations/002_leads.sql`: a `leads` table with RLS (`auth.uid() = user_id`), a unique `(user, source, source_id)` pair so saving twice just updates, and an `updated_at` trigger. **Only IDs and my own data are stored**: status, notes, dates, website verdict, score, demo slug, and my search inputs.
+- **Login** (`/login`): Supabase email + password for a single user. I create my user in the dashboard and turn off sign-ups. The paid `/api/*` endpoints check the token *and* `ALLOWED_EMAIL`, so even a leaked sign-up couldn't use my quota.
+- **Live vs Demo:** live mode turns on only when Supabase is configured, I'm logged in, and the page isn't embedded or using `?demo=1`. Everyone else gets Demo mode automatically. When logged in, a Live/Demo switch appears on the search page.
+- **Tracker page:**
+  - pipeline filter with counts;
+  - per lead: status dropdown, "Log contact today" (moves New → Contacted), notes that save on blur, a link to its demo page, and a two-step Remove (no browser `confirm()` popups);
+  - an automatic **"Follow up"** badge when a lead was contacted 3+ days ago with no reply.
+- Business names in the tracker are fetched with the cheaper "basic" Place Details field mask and cached for the browser session.
+- **Lead page integration:**
+  - "Save to tracker";
+  - publishing a demo page saves the lead automatically;
+  - after copying or opening a message, it asks *"Sent the message? Mark as contacted"* instead of assuming you sent it.
+- **Demo tracker:** the same UI backed by localStorage and seeded with 3 sample leads, so portfolio visitors can try the full pipeline.
+- **End-to-end test** (Playwright, 360 px, `?embed=1`): search → open top lead → demo link → write message (checks the link and opt-out) → copy → mark contacted → tracker → change status + notes → reload → still saved → public page renders. Passes with zero console errors and no horizontal scroll.
+
+**What went wrong / surprises:**
+- **Bug found by the e2e test:** the footer came back after navigating inside the iframe. In `isEmbed = urlFlag || rememberInSession(...)`, the `||` short-circuited, so the "remember" side never ran when the URL flag was true. I fixed it by always calling the function.
+- On 360 px the status filter labels wrapped ("All / 3" on two lines). They're now `nowrap`, and the group scrolls horizontally instead.
+- TypeScript caught that spreading a `Partial<>` over a new lead could leave `source`/`sourceId` undefined. Fixed by setting them explicitly.
+- I can't run a real Supabase here, so I parsed both SQL migrations with `pglast` (the real Postgres parser) to catch syntax errors before you run them.

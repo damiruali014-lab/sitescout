@@ -3,6 +3,7 @@ import { Layout } from './components/Layout'
 import { ModeProvider } from './lib/mode'
 import { DemoLanding } from './pages/DemoLanding'
 import { LeadPage } from './pages/LeadPage'
+import { LoginPage } from './pages/LoginPage'
 import { NotFound } from './pages/NotFound'
 import { SearchPage } from './pages/SearchPage'
 import { TrackerPage } from './pages/TrackerPage'
@@ -17,6 +18,7 @@ export default function App() {
             <Route index element={<SearchPage />} />
             <Route path="lead/:key" element={<LeadPage />} />
             <Route path="tracker" element={<TrackerPage />} />
+            <Route path="login" element={<LoginPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

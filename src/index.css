@@ -343,6 +343,7 @@ main {
   border: 1px solid var(--border);
 }
 .segmented button {
+  white-space: nowrap;
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -828,4 +829,67 @@ main {
 .msg-text {
   min-height: 200px;
   font-size: 0.92rem;
+}
+
+/* ─── Tracker ─── */
+.tracker-row {
+  display: grid;
+  gap: 10px;
+}
+.tracker-top {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.tracker-name {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.tracker-name:hover {
+  color: var(--accent-text);
+}
+.tracker-actions {
+  gap: 6px;
+}
+.status-won {
+  border-color: var(--good);
+  color: var(--good);
+}
+.status-lost {
+  color: var(--muted);
+}
+.status-replied {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.btn-danger {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+}
+.notes summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+  width: fit-content;
+}
+.notes .textarea {
+  margin-top: 8px;
+  min-height: 72px;
+}
+.narrow {
+  max-width: 420px;
+  margin: 24px auto;
+}
+@media (max-width: 480px) {
+  .tracker-top {
+    flex-direction: column;
+  }
+}
+.nav-btn {
+  color: var(--muted);
+  font-weight: 400;
 }
