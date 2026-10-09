@@ -6,6 +6,7 @@ import type { Business, SearchResponse, SiteCheck, SiteStatus } from '../../api/
  */
 export interface DemoPreset {
   id: string
+  country: string
   city: string
   category: string
   label: string
@@ -63,6 +64,7 @@ function build(prefix: string, city: string, rows: Row[]): DemoPreset['businesse
 export const DEMO_PRESETS: DemoPreset[] = [
   {
     id: 'almaty-beauty',
+    country: 'KZ',
     city: 'Almaty',
     category: 'Beauty salons',
     label: 'Beauty salons, Almaty',
@@ -81,6 +83,7 @@ export const DEMO_PRESETS: DemoPreset[] = [
   },
   {
     id: 'krakow-dentists',
+    country: 'PL',
     city: 'Kraków',
     category: 'Dentists',
     label: 'Dentists, Kraków',
@@ -97,6 +100,7 @@ export const DEMO_PRESETS: DemoPreset[] = [
   },
   {
     id: 'astana-coffee',
+    country: 'KZ',
     city: 'Astana',
     category: 'Coffee shops',
     label: 'Coffee shops, Astana',
@@ -125,12 +129,12 @@ export function findDemoPreset(city: string, category: string): DemoPreset | und
   )
 }
 
-export function demoSearch(presetId: string): SearchResponse {
+export function demoSearch(presetId: string, limit = 50): SearchResponse {
   const p = DEMO_PRESETS.find((x) => x.id === presetId) ?? DEMO_PRESETS[0]
   return {
     source: 'demo',
     query: p.label,
-    results: p.businesses.map(({ site: _site, ...b }) => b),
+    results: p.businesses.slice(0, limit).map(({ site: _site, ...b }) => b),
     attribution: DEMO_ATTRIBUTION,
   }
 }

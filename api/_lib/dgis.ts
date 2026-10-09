@@ -9,7 +9,9 @@ import type { Business, Lang, SearchResponse } from './types.js'
  * Demo keys are limited, so we use small pages (10) and only load more on request.
  */
 const BASE = 'https://catalog.api.2gis.com'
-const PAGE_SIZE = 10
+// Demo keys allow page_size ≤ 10 and page ≤ 5 (so 50 results max). Paid keys allow more — override via env.
+const PAGE_SIZE = Number(process.env.DGIS_PAGE_SIZE) || 10
+const MAX_PAGE = Number(process.env.DGIS_MAX_PAGE) || 5
 const FIELDS_FULL = 'items.name_ex,items.address,items.contact_groups,items.schedule,items.reviews,items.rubrics,items.point'
 const FIELDS_NO_CONTACTS = 'items.name_ex,items.address,items.schedule,items.reviews,items.rubrics,items.point'
 
@@ -151,7 +153,35 @@ async function regionId(key: string, city: string): Promise<string> {
   return String(id)
 }
 
+/** Collects up to `limit` businesses by walking 2GIS pages. Each page is one billed request. */
 export async function dgisSearch(
+  key: string,
+  opts: { city: string; category: string; lang: Lang; limit: number; startPage?: number },
+): Promise<SearchResponse> {
+  const out: Business[] = []
+  let page = opts.startPage ?? 1
+  let requests = 0
+  let last: SearchResponse | undefined
+  while (out.length < opts.limit && page <= MAX_PAGE) {
+    last = await dgisSearchPage(key, opts.city, opts.category, opts.lang, page)
+    requests++
+    out.push(...last.results)
+    if (!last.next) break
+    page = Number(last.next)
+  }
+  const more = last?.next && page <= MAX_PAGE ? String(page) : undefined
+  return {
+    source: '2gis',
+    query: `${opts.category} — ${opts.city}`,
+    results: out.slice(0, opts.limit),
+    next: out.length >= opts.limit ? more : undefined,
+    attribution: DGIS_ATTRIBUTION,
+    notice: last?.notice,
+    requests,
+  }
+}
+
+async function dgisSearchPage(
   key: string,
   city: string,
   category: string,
@@ -188,7 +218,7 @@ export async function dgisSearch(
     source: '2gis',
     query: `${category} — ${city}`,
     results: items.map((i) => ({ ...toBusiness(i, lang, city), ...(hidden ? { contactsHidden: true } : {}) })),
-    next: page * PAGE_SIZE < total ? String(page + 1) : undefined,
+    next: page * PAGE_SIZE < total && page < MAX_PAGE ? String(page + 1) : undefined,
     attribution: DGIS_ATTRIBUTION,
     notice,
   }

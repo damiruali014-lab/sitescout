@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isEmbed } from '../lib/config'
+import { COUNTRIES, findCountry, MAX_RESULTS } from '../../api/_lib/countries'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { LeadCard } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -25,13 +26,14 @@ export function SearchPage() {
   const s = useSearchState()
   const [city, setCity] = useState(s.city)
   const [category, setCategory] = useState(s.category)
+  const country = findCountry(s.country) ?? COUNTRIES[0]
   const navigate = useNavigate()
 
   // Demo mode: show sample results straight away so portfolio visitors see something on first paint.
   useEffect(() => {
     if (mode === 'demo' && !getSearchState().response && !getSearchState().error) {
       const preset = findDemoPreset(getSearchState().city, getSearchState().category) ?? DEMO_PRESETS[0]
-      setSearchState({ city: preset.city, category: preset.category, response: demoSearch(preset.id), checks: {} })
+      setSearchState({ country: preset.country, city: preset.city, category: preset.category, response: demoSearch(preset.id, getSearchState().limit), checks: {} })
     }
   }, [mode])
 
@@ -55,11 +57,11 @@ export function SearchPage() {
         })
         return
       }
-      setSearchState({ loading: false, response: demoSearch(preset.id), checks: {} })
+      setSearchState({ loading: false, response: demoSearch(preset.id, s.limit), checks: {} })
       return
     }
     try {
-      const res = await liveSearch({ city: c, category: k, provider: s.provider, lang: s.lang, page })
+      const res = await liveSearch({ country: s.country, city: c, category: k, limit: s.limit, provider: s.provider, lang: s.lang, page })
       setSearchState((prev) => ({
         loading: false,
         response: page && prev.response ? { ...res, results: [...prev.response.results, ...res.results] } : res,
@@ -70,6 +72,18 @@ export function SearchPage() {
     }
   }
 
+  function pickCountry(code: string) {
+    const next = findCountry(code)
+    setSearchState({ country: code })
+    // Switch to the country's first city unless the typed city already belongs to it.
+    if (next && !next.cities.some((c) => c.toLowerCase() === city.trim().toLowerCase())) setCity(next.cities[0])
+  }
+
+  // Which provider will run, and roughly how many paid requests the search costs.
+  const effectiveProvider = s.provider === 'auto' ? country.provider : s.provider
+  const perPage = effectiveProvider === '2gis' ? 10 : 20
+  const requestsNeeded = Math.ceil(s.limit / perPage)
+
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     void run()
@@ -79,7 +93,7 @@ export function SearchPage() {
     const p = DEMO_PRESETS.find((x) => x.id === id)!
     setCity(p.city)
     setCategory(p.category)
-    setSearchState({ city: p.city, category: p.category, response: demoSearch(p.id), checks: {}, error: undefined })
+    setSearchState({ country: p.country, city: p.city, category: p.category, response: demoSearch(p.id, getSearchState().limit), checks: {}, error: undefined })
   }
 
   const res = s.response
@@ -123,29 +137,49 @@ export function SearchPage() {
 
       <form className="card search-form" onSubmit={onSubmit}>
         <div className="field">
+          <label className="label" htmlFor="country">
+            Country
+          </label>
+          <select id="country" className="select" value={country.code} onChange={(e) => pickCountry(e.target.value)}>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
           <label className="label" htmlFor="city">
             City
           </label>
-          <input id="city" className="input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Almaty" required maxLength={80} autoComplete="address-level2" />
+          <input id="city" className="input" list="city-list" value={city} onChange={(e) => setCity(e.target.value)} placeholder={`e.g. ${country.cities[0]}`} required maxLength={80} autoComplete="off" />
+          <datalist id="city-list">
+            {country.cities.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </div>
-        <div className="field">
+        <div className="field field-wide">
           <label className="label" htmlFor="category">
             Business category
           </label>
-          <input id="category" className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. beauty salons" required maxLength={80} />
+          <input id="category" className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. barbershops, dentists, cafés" required maxLength={80} />
         </div>
-        {mode === 'live' && (
-          <div className="field">
-            <label className="label" htmlFor="provider">
-              Data source
-            </label>
-            <select id="provider" className="select" value={s.provider} onChange={(e) => setSearchState({ provider: e.target.value as Provider })}>
-              <option value="auto">Auto (2GIS for Kazakhstan)</option>
-              <option value="google">Google Places</option>
-              <option value="2gis">2GIS</option>
-            </select>
-          </div>
-        )}
+        <div className="field">
+          <label className="label" htmlFor="limit">
+            How many (1–{MAX_RESULTS})
+          </label>
+          <input
+            id="limit"
+            className="input"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={MAX_RESULTS}
+            value={s.limit}
+            onChange={(e) => setSearchState({ limit: Math.min(MAX_RESULTS, Math.max(1, Number(e.target.value) || 1)) })}
+          />
+        </div>
         <div className="field">
           <label className="label" htmlFor="lang">
             Language
@@ -158,9 +192,28 @@ export function SearchPage() {
             ))}
           </select>
         </div>
-        <button type="submit" className="btn btn-primary search-submit" disabled={s.loading}>
-          {s.loading ? <span className="spinner" /> : <SearchIcon />} Search
-        </button>
+        {mode === 'live' && (
+          <div className="field">
+            <label className="label" htmlFor="provider">
+              Data source
+            </label>
+            <select id="provider" className="select" value={s.provider} onChange={(e) => setSearchState({ provider: e.target.value as Provider })}>
+              <option value="auto">Auto ({country.provider === '2gis' ? '2GIS' : 'Google'})</option>
+              <option value="google">Google Places</option>
+              <option value="2gis">2GIS</option>
+            </select>
+          </div>
+        )}
+        <div className="search-actions">
+          <button type="submit" className="btn btn-primary search-submit" disabled={s.loading}>
+            {s.loading ? <span className="spinner" /> : <SearchIcon />} Search
+          </button>
+          {mode === 'live' && (
+            <span className="small muted">
+              ≈ {requestsNeeded} {effectiveProvider === '2gis' ? '2GIS' : 'Google'} request{requestsNeeded > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </form>
 
       {mode === 'demo' && (

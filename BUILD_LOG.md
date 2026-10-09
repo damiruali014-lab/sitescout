@@ -219,3 +219,23 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - New test built from the real 2GIS response shape (28 tests total).
 
 **Lesson:** mocked tests passed for the case I *imagined* (an error). The real API did something else. Test with real keys as early as possible.
+
+---
+
+## Step 10 — Country list, city suggestions, choose how many (1–50)
+
+**Prompt:** "While using the app I realised we need a list of countries, then cities, and to choose how many businesses I see — anywhere from 1 to 50, not always 10."
+
+**What I built:**
+- `api/_lib/countries.ts`: 21 countries (Kazakhstan, most of Europe, Georgia, Turkey, UAE, Malaysia), each with a default data source and suggested cities. Kazakhstan uses 2GIS; the rest use Google.
+- Search form: **Country** dropdown, then **City** with suggestions for that country (any city can still be typed), then category, **How many (1–50)**, and language. In Live mode it shows an estimate of the paid API requests before you search.
+- **Paging on the server:**
+  - Google returns up to 20 per request and at most 60 per query, so asking for 45 means 3 requests, with the last one asking for exactly 5.
+  - The 2GIS demo key allows **10 per page and at most 5 pages**, which I found by testing the real API (`page_size` 20 → HTTP 400). So 50 results means 5 requests.
+  - Both limits can be raised with env vars for a paid key.
+- Google queries now include the country ("barbershops in Kraków, Poland") plus `regionCode`, which avoids results from a same-named city elsewhere. I checked this with a real request.
+- 3 new unit tests for paging (31 total).
+
+**What went wrong / surprises:**
+- The demo key's limits weren't in the docs I read. A real request told me ("Length of parameter 'page_size' should be from 1 to 10"). The real-key tests keep paying off.
+- The client-side session cache key didn't include the country or the count. The same search with a different count would have shown stale results. Fixed.

@@ -7,6 +7,10 @@ import { readSession, writeSession } from './storage'
  * and back (and a page reload, via sessionStorage).
  */
 export interface SearchState {
+  /** ISO country code */
+  country: string
+  /** How many businesses to fetch (1–50) */
+  limit: number
   city: string
   category: string
   provider: Provider
@@ -28,6 +32,8 @@ export type SortKey = 'score' | 'rating' | 'reviews' | 'name'
 
 const KEY = 'sitescout-search-v1'
 const initial: SearchState = {
+  country: 'KZ',
+  limit: 20,
   city: 'Almaty',
   category: 'Beauty salons',
   provider: 'auto',

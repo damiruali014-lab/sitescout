@@ -30,8 +30,12 @@ export interface Business {
 }
 
 export interface SearchRequest {
+  /** ISO country code, e.g. "KZ", "PL" — picks the default provider and biases Google */
+  country?: string
   city: string
   category: string
+  /** How many businesses to return (1–50) */
+  limit?: number
   provider?: Provider
   /** Opaque cursor from a previous response ("load more") */
   page?: string
@@ -47,6 +51,8 @@ export interface SearchResponse {
   attribution: string
   notice?: string
   cached?: boolean
+  /** How many paid API requests this search used */
+  requests?: number
 }
 
 export type SiteStatus = 'none' | 'unreachable' | 'no_https' | 'no_viewport' | 'ok'

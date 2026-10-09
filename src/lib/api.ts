@@ -27,7 +27,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
  * costs nothing. (Cleared when the tab closes — we don't keep provider data long-term.)
  */
 export async function liveSearch(req: SearchRequest): Promise<SearchResponse> {
-  const key = 'search:' + JSON.stringify([req.provider, req.city, req.category, req.lang, req.page ?? ''].map((v) => String(v ?? '').toLowerCase()))
+  const key = 'search:' + JSON.stringify([req.provider, req.country, req.limit, req.city, req.category, req.lang, req.page ?? ''].map((v) => String(v ?? '').toLowerCase()))
   const hit = readSession<SearchResponse>(key)
   if (hit) return { ...hit, cached: true }
   const res = await apiPost<SearchResponse>('/api/search', req)

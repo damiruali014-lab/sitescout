@@ -76,14 +76,7 @@ async function googleError(res: Response): Promise<Error> {
   return new Error(msg)
 }
 
-export async function googleSearch(
-  apiKey: string,
-  city: string,
-  category: string,
-  lang: Lang,
-  pageToken?: string,
-): Promise<SearchResponse> {
-  const query = `${category} in ${city}`
+async function searchPage(apiKey: string, body: Record<string, unknown>) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
@@ -91,15 +84,42 @@ export async function googleSearch(
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': SEARCH_FIELDS,
     },
-    body: JSON.stringify({ textQuery: query, pageSize: 20, languageCode: lang, ...(pageToken ? { pageToken } : {}) }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(10_000),
   })
   if (!res.ok) throw await googleError(res)
-  const data = (await res.json()) as { places?: GPlace[]; nextPageToken?: string }
-  const results = (data.places ?? [])
-    .filter((p) => p.businessStatus !== 'CLOSED_PERMANENTLY')
-    .map((p) => toBusiness(p, city))
-  return { source: 'google', query, results, next: data.nextPageToken, attribution: GOOGLE_ATTRIBUTION }
+  return (await res.json()) as { places?: GPlace[]; nextPageToken?: string }
+}
+
+/**
+ * Collects up to `limit` places. Each page (max 20 places) is one billed request;
+ * Google returns at most 60 places per query (3 pages).
+ */
+export async function googleSearch(
+  apiKey: string,
+  opts: { city: string; category: string; lang: Lang; countryName?: string; regionCode?: string; limit: number; pageToken?: string },
+): Promise<SearchResponse> {
+  const { city, category, lang, limit } = opts
+  const query = `${category} in ${city}${opts.countryName ? ', ' + opts.countryName : ''}`
+  const results: Business[] = []
+  let token = opts.pageToken
+  let requests = 0
+  do {
+    const data = await searchPage(apiKey, {
+      textQuery: query,
+      pageSize: Math.min(20, Math.max(1, limit - results.length)),
+      languageCode: lang,
+      ...(opts.regionCode ? { regionCode: opts.regionCode.toLowerCase() } : {}),
+      ...(token ? { pageToken: token } : {}),
+    }).catch((e) => {
+      if (requests === 0) throw e
+      return { places: [], nextPageToken: undefined } // keep what we already have
+    })
+    requests++
+    for (const p of data.places ?? []) if (p.businessStatus !== 'CLOSED_PERMANENTLY') results.push(toBusiness(p, city))
+    token = data.nextPageToken
+  } while (token && results.length < limit && requests < 3)
+  return { source: 'google', query, results: results.slice(0, limit), next: token, attribution: GOOGLE_ATTRIBUTION, requests }
 }
 
 export async function googleDetails(
