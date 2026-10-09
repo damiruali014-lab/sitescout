@@ -522,3 +522,6 @@ main {
   flex: none;
   margin-top: 3px;
 }
+.lead-site {
+  overflow-wrap: anywhere;
+}

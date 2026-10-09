@@ -1,8 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { LeadCard } from '../components/LeadCard'
 import { SearchIcon } from '../components/Icons'
+import { SiteStatusBadge } from '../components/SiteStatus'
 import { liveSearch } from '../lib/api'
+import { ensureChecks } from '../lib/checks'
+import { displayHost } from '../lib/format'
 import { DEMO_PRESETS, demoSearch, findDemoPreset } from '../lib/demoData'
 import { useMode } from '../lib/modeContext'
 import { setSearchState, useSearchState } from '../lib/searchStore'
@@ -19,6 +22,11 @@ export function SearchPage() {
   const [city, setCity] = useState(s.city)
   const [category, setCategory] = useState(s.category)
   const [selected, setSelected] = useState<string>()
+
+  // Check every new result's website automatically (homepage only, batched).
+  useEffect(() => {
+    if (s.response?.results.length) void ensureChecks(s.response.results, mode)
+  }, [s.response, mode])
 
   async function run(page?: string) {
     const c = city.trim()
@@ -165,7 +173,21 @@ export function SearchPage() {
           ) : (
             <div className="lead-list">
               {res.results.map((b) => (
-                <LeadCard key={b.key} business={b} selected={selected === b.key} onSelect={() => setSelected(b.key)} />
+                <LeadCard
+                  key={b.key}
+                  business={b}
+                  selected={selected === b.key}
+                  onSelect={() => setSelected(b.key)}
+                  aside={<SiteStatusBadge check={s.checks[b.key]} />}
+                  footer={
+                    <p className="muted small lead-site">
+                      {b.website ? displayHost(b.website) : b.instagram ? `Instagram: @${b.instagram}` : 'No website listed'}
+                      {typeof s.checks[b.key] === 'object' && (s.checks[b.key] as { note?: string }).note && (
+                        <> · {(s.checks[b.key] as { note?: string }).note}</>
+                      )}
+                    </p>
+                  }
+                />
               ))}
             </div>
           )}

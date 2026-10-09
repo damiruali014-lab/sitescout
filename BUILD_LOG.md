@@ -56,3 +56,26 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - oxlint flagged a control-character regex in my input sanitiser. I replaced it with a simpler whitespace collapse.
 - Fast-refresh lint rule: a component file must export only components. I moved helpers to `src/lib/format.ts` and split the React context from its provider.
 - I can't call the real APIs without keys, so I tested both adapters with a mocked `fetch`. That covered the field mask header, filtering closed places, 2GIS region lookup, and the "no contacts permission" fallback.
+
+---
+
+## Step 3 — Website check
+
+**Prompt:** "For each business, classify its website as none / unreachable / no HTTPS / not mobile-friendly (no viewport meta tag) / OK. Only fetch the homepage, with a short timeout."
+
+**What I built:**
+- `api/_lib/sitecheck.ts`. It tries `https://host/` first (5 s timeout), then falls back to `http://host/` (4 s). It reads at most 256 KB of the homepage and looks for `<meta name="viewport">`.
+- **Social-only = no website:** links to Instagram, Facebook, WhatsApp, Taplink, Linktree, 2GIS and similar count as "none", with a note. These are some of the best leads, because the business clearly wants an online presence.
+- **SSRF protection** (the server fetches URLs that come from third-party data):
+  - every redirect hop is checked;
+  - private, loopback and link-local IPs are refused, including the cloud metadata address 169.254.169.254;
+  - only ports 80/443 are allowed;
+  - at most 4 redirects.
+- A clear bot User-Agent that links to my portfolio, so site owners can see who is checking.
+- `api/check.ts` checks up to 10 sites per call, 5 at a time. Results are cached per hostname for 1 hour.
+- In the UI, checks start automatically after a search and fill in card by card ("Checking…" → badge with a reason). Demo mode simulates the same staggered effect.
+
+**What went wrong / surprises:**
+- Worst case is a dead HTTPS plus a slow HTTP: about 9 s per site. With 20 sites per call, that could exceed the function's time limit. I lowered the batch to 10, which means at most 2 rounds of 5 parallel checks.
+- Tested against real sites: wikipedia.org → OK; info.cern.ch → not mobile-friendly; neverssl.com → no HTTPS; a made-up .kz domain → DNS failed; 169.254.169.254 → refused.
+- Sites that answer 401/403/429 are usually blocking bots, not broken. They're marked "unreachable — verify by hand" instead of being silently counted as dead.
