@@ -8,7 +8,8 @@ const BATCH = 10
 
 /** Runs the website check for every business that doesn't have one yet. Safe to call repeatedly. */
 export async function ensureChecks(businesses: Business[], mode: Mode): Promise<void> {
-  const todo = businesses.filter((b) => !getSearchState().checks[b.key])
+  // Skip businesses whose website the provider hid — there is nothing to check.
+  const todo = businesses.filter((b) => !b.contactsHidden && !getSearchState().checks[b.key])
   if (!todo.length) return
   // Mark as pending synchronously so a second call (e.g. React StrictMode) doesn't double-fetch.
   setSearchState((s) => ({ checks: { ...s.checks, ...Object.fromEntries(todo.map((b) => [b.key, 'pending' as const])) } }))

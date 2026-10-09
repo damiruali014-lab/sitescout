@@ -47,7 +47,7 @@ export function hookDetail(b: Business, lang: Lang): string {
 }
 
 export function issueLine(b: Business, check: SiteCheck | undefined, lang: Lang): string {
-  const status = check?.status ?? (b.website ? undefined : 'none')
+  const status = check?.status ?? (b.website || b.contactsHidden ? undefined : 'none')
   const h = host(check?.url ?? b.website)
   const social = /social|instagram|facebook|link/i.test(check?.note ?? '') || (!b.website && b.instagram)
   const L = {
@@ -58,6 +58,7 @@ export function issueLine(b: Business, check: SiteCheck | undefined, lang: Lang)
       no_https: `Your site ${h} opens without HTTPS, so browsers mark it “Not secure”.`,
       no_viewport: `Your site ${h} isn’t adapted for phones, where most customers look.`,
       ok: `I looked at ${h} and had a few ideas to bring you more bookings.`,
+      unknown: 'I couldn’t find a website for you online, so new customers may be missing you.',
     },
     ru: {
       social: 'Я заметил, что у вас есть только страница в соцсетях, а полноценного сайта нет.',
@@ -66,6 +67,7 @@ export function issueLine(b: Business, check: SiteCheck | undefined, lang: Lang)
       no_https: `Ваш сайт ${h} открывается без HTTPS, и браузеры помечают его «Не защищено».`,
       no_viewport: `Ваш сайт ${h} не адаптирован для телефонов, а большинство клиентов смотрит именно с них.`,
       ok: `Я посмотрел ${h} и у меня есть пара идей, как получать больше записей.`,
+      unknown: 'Я не нашёл ваш сайт в интернете — новые клиенты могут вас не находить.',
     },
     kk: {
       social: 'Сізде тек әлеуметтік желідегі парақша бар екенін байқадым, толыққанды сайт жоқ.',
@@ -74,10 +76,12 @@ export function issueLine(b: Business, check: SiteCheck | undefined, lang: Lang)
       no_https: `${h} сайтыңыз HTTPS-сіз ашылады, браузерлер оны «Қауіпсіз емес» деп белгілейді.`,
       no_viewport: `${h} сайтыңыз телефонға бейімделмеген, ал клиенттердің көбі телефоннан қарайды.`,
       ok: `${h} сайтыңызды қарап шықтым, көбірек клиент тартуға бірнеше идеям бар.`,
+      unknown: 'Интернеттен сайтыңызды таба алмадым — жаңа клиенттер сізді таппай жүруі мүмкін.',
     },
   }[lang]
   if (status === 'none' && social) return L.social
-  return L[status ?? 'none']
+  if (!status) return L.unknown
+  return L[status]
 }
 
 /** Deterministic template — used in Demo mode and whenever the AI is unavailable. */

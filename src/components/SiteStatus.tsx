@@ -1,7 +1,13 @@
 import type { SiteCheck } from '../../api/_lib/types'
 import { STATUS_META } from '../lib/siteStatus'
 
-export function SiteStatusBadge({ check }: { check?: SiteCheck | 'pending' }) {
+export function SiteStatusBadge({ check, hidden }: { check?: SiteCheck | 'pending'; hidden?: boolean }) {
+  if (!check && hidden)
+    return (
+      <span className="badge" title="Your 2GIS key hides phones and websites — check this business in 2GIS by hand">
+        Website unknown
+      </span>
+    )
   if (!check) return <span className="badge">Not checked</span>
   if (check === 'pending')
     return (

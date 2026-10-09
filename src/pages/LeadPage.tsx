@@ -68,7 +68,7 @@ export function LeadPage() {
         </div>
         <div className="badges">
           <ScoreBadge score={score} />
-          <SiteStatusBadge check={check} />
+          <SiteStatusBadge check={check} hidden={b.contactsHidden} />
         </div>
       </header>
 
@@ -132,7 +132,7 @@ export function LeadPage() {
                 <GlobeIcon size={14} /> Website
               </dt>
               <dd>
-                {b.website ? (live ? <a href={b.website} target="_blank" rel="noreferrer nofollow">{displayHost(b.website)}</a> : displayHost(b.website)) : 'None listed'}
+                {b.website ? (live ? <a href={b.website} target="_blank" rel="noreferrer nofollow">{displayHost(b.website)}</a> : displayHost(b.website)) : b.contactsHidden ? 'Hidden by your 2GIS key — check in 2GIS' : 'None listed'}
               </dd>
             </div>
             {b.instagram && (

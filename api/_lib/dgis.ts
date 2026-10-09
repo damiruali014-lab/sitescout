@@ -27,6 +27,19 @@ const KZ_CITIES = [
   'көкшетау', 'taldykorgan', 'талдыкорган', 'талдықорған', 'ekibastuz', 'экибастуз', 'zhezkazgan', 'жезказган',
 ]
 
+const CONTACTS_NOTICE =
+  'Your 2GIS key returns no phones or websites (demo keys hide "contact_groups"), so websites show as “unknown”. Open a business in 2GIS to check by hand, or ask 2GIS (api@2gis.ru) to enable contacts on your key.'
+
+/** 2GIS has no en_KZ locale (it returns 400), and data is in Russian anyway. */
+function dgisLocale(lang: Lang): string {
+  return lang === 'kk' ? 'kk_KZ' : 'ru_KZ'
+}
+
+/** True when we asked for contacts but not a single item came back with them. */
+function contactsHidden(items: DgisItem[]): boolean {
+  return items.length > 0 && items.every((i) => !i.contact_groups?.length)
+}
+
 export function isKazakhCity(city: string): boolean {
   const c = city.trim().toLowerCase()
   return KZ_CITIES.some((k) => c === k || c.startsWith(k + ',') || c.startsWith(k + ' '))
@@ -146,7 +159,7 @@ export async function dgisSearch(
   page = 1,
 ): Promise<SearchResponse> {
   const region_id = await regionId(key, city)
-  const locale = lang === 'en' ? 'en_KZ' : lang === 'kk' ? 'kk_KZ' : 'ru_KZ'
+  const locale = dgisLocale(lang)
   const params = {
     q: category.trim(),
     region_id,
@@ -160,7 +173,7 @@ export async function dgisSearch(
   let data = await call<{ items: DgisItem[]; total: number }>('/3.0/items', { ...params, fields: FIELDS_FULL })
   if (data.meta.code !== 200 && data.meta.code !== 404 && isPermissionError(data.meta)) {
     data = await call('/3.0/items', { ...params, fields: FIELDS_NO_CONTACTS })
-    notice = 'Your 2GIS key has no access to contacts (phones/websites). Ask 2GIS to enable "contact_groups".'
+    notice = CONTACTS_NOTICE
   }
   if (data.meta.code === 404) {
     return { source: '2gis', query: `${category} — ${city}`, results: [], attribution: DGIS_ATTRIBUTION, notice }
@@ -168,10 +181,13 @@ export async function dgisSearch(
   if (data.meta.code !== 200) throw new Error(`2GIS: ${data.meta.error?.message ?? 'error ' + data.meta.code}`)
   const items = data.result?.items ?? []
   const total = data.result?.total ?? 0
+  // Demo keys don't error without the contacts permission — they silently drop the field.
+  const hidden = contactsHidden(items)
+  if (hidden) notice = CONTACTS_NOTICE
   return {
     source: '2gis',
     query: `${category} — ${city}`,
-    results: items.map((i) => toBusiness(i, lang, city)),
+    results: items.map((i) => ({ ...toBusiness(i, lang, city), ...(hidden ? { contactsHidden: true } : {}) })),
     next: page * PAGE_SIZE < total ? String(page + 1) : undefined,
     attribution: DGIS_ATTRIBUTION,
     notice,
@@ -180,12 +196,14 @@ export async function dgisSearch(
 
 export async function dgisDetails(key: string, ids: string[], lang: Lang): Promise<Business[]> {
   if (!ids.length) return []
-  const locale = lang === 'en' ? 'en_KZ' : lang === 'kk' ? 'kk_KZ' : 'ru_KZ'
+  const locale = dgisLocale(lang)
   const base = { id: ids.slice(0, 100).join(','), locale, key }
   let data = await call<{ items: DgisItem[] }>('/3.0/items/byid', { ...base, fields: FIELDS_FULL })
   if (data.meta.code !== 200 && isPermissionError(data.meta)) {
     data = await call('/3.0/items/byid', { ...base, fields: FIELDS_NO_CONTACTS })
   }
   if (data.meta.code !== 200) throw new Error(`2GIS: ${data.meta.error?.message ?? 'error ' + data.meta.code}`)
-  return (data.result?.items ?? []).map((i) => toBusiness(i, lang))
+  const items = data.result?.items ?? []
+  const hidden = contactsHidden(items)
+  return items.map((i) => ({ ...toBusiness(i, lang), ...(hidden ? { contactsHidden: true } : {}) }))
 }

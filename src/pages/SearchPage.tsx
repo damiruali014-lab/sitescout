@@ -231,12 +231,12 @@ export function SearchPage() {
                   aside={
                     <div className="badges">
                       <ScoreBadge score={score} />
-                      <SiteStatusBadge check={s.checks[b.key]} />
+                      <SiteStatusBadge check={s.checks[b.key]} hidden={b.contactsHidden} />
                     </div>
                   }
                   footer={
                     <p className="muted small lead-site">
-                      {b.website ? displayHost(b.website) : b.instagram ? `Instagram: @${b.instagram}` : 'No website listed'}
+                      {b.website ? displayHost(b.website) : b.instagram ? `Instagram: @${b.instagram}` : b.contactsHidden ? 'Website hidden by 2GIS key' : 'No website listed'}
                       {typeof s.checks[b.key] === 'object' && (s.checks[b.key] as { note?: string }).note && (
                         <> · {(s.checks[b.key] as { note?: string }).note}</>
                       )}

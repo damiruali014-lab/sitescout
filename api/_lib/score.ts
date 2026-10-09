@@ -30,13 +30,14 @@ export function scoreLead(b: Business, check?: SiteCheck | 'pending'): LeadScore
   const reasons: string[] = []
   let score = 0
 
-  const status: SiteStatus | undefined = check && check !== 'pending' ? check.status : b.website ? undefined : 'none'
+  const status: SiteStatus | undefined =
+    check && check !== 'pending' ? check.status : b.website || b.contactsHidden ? undefined : 'none'
   if (status) {
     score += SITE_POINTS[status]
     reasons.push(SITE_REASON[status])
   } else {
-    score += 20 // has a website, not checked yet
-    reasons.push('Website not checked yet')
+    score += 20 // has a website we haven't checked, or the provider hid it
+    reasons.push(b.contactsHidden ? 'Website unknown (contacts hidden by 2GIS key)' : 'Website not checked yet')
   }
 
   const r = b.rating ?? 0
@@ -51,7 +52,7 @@ export function scoreLead(b: Business, check?: SiteCheck | 'pending'): LeadScore
   if (n >= 100) reasons.push(`${n} reviews — busy business`)
   else if (n > 0) reasons.push(`${n} reviews`)
 
-  if (b.phone || b.whatsapp || b.instagram || b.email) score += 10
+  if (b.phone || b.whatsapp || b.instagram || b.email || b.contactsHidden) score += 10
   else reasons.push('No contact channel found')
 
   score = Math.max(0, Math.min(100, score))

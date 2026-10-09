@@ -199,3 +199,23 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
   - (1) Decide the **data/terms rules before coding**. The "store only IDs" rule shaped the database design.
   - (2) Put **anything the AI must never get wrong** (opt-out line, link) in code, not in the prompt.
   - (3) A single end-to-end test caught a bug that unit tests and screenshots didn't.
+
+---
+
+## Step 9 — Real keys: Google ✓, Supabase ✓, 2GIS (demo key) surprises
+
+**Prompt:** "In my country we don't use Google Maps, we use 2GIS — add the 2GIS key."
+
+**Tested with real keys (from my Mac, without printing them):**
+- **Google Places:** "dentists in Kraków" returned real clinics with ratings, review counts and websites.
+- **Supabase:**
+  - both tables and the view-counter function work;
+  - the anon key can't read anyone's leads (RLS);
+  - sign-ups are blocked.
+  - **Bug in my setup:** I had pasted the URL with `/rest/v1/` on the end. The fix: the URL must end at `.supabase.co`.
+- **2GIS:** search works, with real ratings (e.g. 4.8 from 1,173 reviews) and opening hours. But two surprises:
+  1. **`en_KZ` is not a valid 2GIS locale** (HTTP 400). English searches now use `ru_KZ`, since the business data is in Russian anyway.
+  2. **The demo key silently drops phones and websites.** I'd guessed 2GIS would return an error, but it just leaves `contact_groups` out. That made every business look like it had "No website", a fake 100-point Hot lead. The fix: when no result has contacts, each business is flagged `contactsHidden`. The badge then says "Website unknown", the website check is skipped, the score treats the website as unknown (max ≈ 70, "Warm"), and the outreach text no longer claims "you don't have a website".
+- New test built from the real 2GIS response shape (28 tests total).
+
+**Lesson:** mocked tests passed for the case I *imagined* (an error). The real API did something else. Test with real keys as early as possible.

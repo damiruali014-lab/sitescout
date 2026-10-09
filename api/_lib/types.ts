@@ -25,6 +25,8 @@ export interface Business {
   hours?: string[]
   mapsUrl?: string
   city?: string
+  /** The provider hid contacts (e.g. 2GIS demo key) — website is unknown, NOT missing */
+  contactsHidden?: boolean
 }
 
 export interface SearchRequest {
