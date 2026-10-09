@@ -79,3 +79,24 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - Worst case is a dead HTTPS plus a slow HTTP: about 9 s per site. With 20 sites per call, that could exceed the function's time limit. I lowered the batch to 10, which means at most 2 rounds of 5 parallel checks.
 - Tested against real sites: wikipedia.org → OK; info.cern.ch → not mobile-friendly; neverssl.com → no HTTPS; a made-up .kz domain → DNS failed; 169.254.169.254 → refused.
 - Sites that answer 401/403/429 are usually blocking bots, not broken. They're marked "unreachable — verify by hand" instead of being silently counted as dead.
+
+---
+
+## Step 4 — Lead score, filter & sort
+
+**Prompt:** "Rank leads (no website = best lead; high rating + many reviews + no/poor website = top). Let me filter and sort."
+
+**What I built:**
+- `api/_lib/score.ts`: a transparent 0–100 score. Every point comes with a human-readable reason, shown on hover.
+  - Website gap: up to 50 (none 50 · down 42 · no HTTPS 32 · not mobile 30 · OK 0).
+  - Rating: up to 20.
+  - Reviews: up to 20, on a log scale, so 300 reviews isn't worth 30× more than 10.
+  - Reachable: +10 if there's a phone, WhatsApp, Instagram or email.
+  - Tiers: Hot ≥ 75, Warm ≥ 50, Cold below that.
+- The logic lives next to the API code but has no dependencies, so the browser imports the same file. Only one scoring formula exists.
+- Toolbar: filter by website (All / No site / Poor site / OK, with live counts), sort (Best lead / Rating / Reviews / Name), and minimum rating.
+- **First unit tests** (Vitest, `npm test`): 21 tests. They check the score ordering and the SSRF guard (private, metadata and IPv6 loopback addresses refused; public IPs allowed).
+
+**What went wrong / surprises:**
+- The list re-sorts while website checks are still landing, so cards move around for a second. I kept it because it shows the ranking happening live. If it gets annoying, the fix is to sort only once all checks are done.
+- On a 360 px screen, the score and status badges squeezed the business name. Below 480 px they now wrap under the name.

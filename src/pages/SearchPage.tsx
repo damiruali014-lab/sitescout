@@ -1,14 +1,16 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { LeadCard } from '../components/LeadCard'
+import { ScoreBadge } from '../components/ScoreBadge'
 import { SearchIcon } from '../components/Icons'
 import { SiteStatusBadge } from '../components/SiteStatus'
 import { liveSearch } from '../lib/api'
 import { ensureChecks } from '../lib/checks'
 import { displayHost } from '../lib/format'
+import { countGroups, filterAndSort, scoreAll } from '../lib/leads'
 import { DEMO_PRESETS, demoSearch, findDemoPreset } from '../lib/demoData'
 import { useMode } from '../lib/modeContext'
-import { setSearchState, useSearchState } from '../lib/searchStore'
+import { setSearchState, useSearchState, type SiteFilter, type SortKey } from '../lib/searchStore'
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: 'en', label: 'English' },
@@ -71,6 +73,15 @@ export function SearchPage() {
   }
 
   const res = s.response
+  const scored = useMemo(() => (res ? scoreAll(res.results, s.checks) : []), [res, s.checks])
+  const counts = useMemo(() => countGroups(scored), [scored])
+  const visible = useMemo(() => filterAndSort(scored, s.filter, s.sort, s.minRating), [scored, s.filter, s.sort, s.minRating])
+  const FILTERS: { value: SiteFilter; label: string }[] = [
+    { value: 'all', label: `All ${counts.all}` },
+    { value: 'none', label: `No site ${counts.none}` },
+    { value: 'poor', label: `Poor site ${counts.poor}` },
+    { value: 'ok', label: `OK ${counts.ok}` },
+  ]
 
   return (
     <div className="stack">
@@ -168,17 +179,52 @@ export function SearchPage() {
             {res.cached && <span className="badge">cached</span>}
           </div>
           {res.notice && <div className="banner">{res.notice}</div>}
+          {res.results.length > 0 && (
+            <div className="toolbar">
+              <div className="segmented segmented-scroll" role="group" aria-label="Filter by website">
+                {FILTERS.map((f) => (
+                  <button key={f.value} type="button" aria-pressed={s.filter === f.value} onClick={() => setSearchState({ filter: f.value })}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <label className="row small muted">
+                Sort
+                <select className="select" value={s.sort} onChange={(e) => setSearchState({ sort: e.target.value as SortKey })}>
+                  <option value="score">Best lead</option>
+                  <option value="rating">Rating</option>
+                  <option value="reviews">Reviews</option>
+                  <option value="name">Name</option>
+                </select>
+              </label>
+              <label className="row small muted">
+                Rating
+                <select className="select" value={s.minRating} onChange={(e) => setSearchState({ minRating: Number(e.target.value) })}>
+                  <option value={0}>Any</option>
+                  <option value={4}>4.0+</option>
+                  <option value={4.5}>4.5+</option>
+                </select>
+              </label>
+            </div>
+          )}
           {res.results.length === 0 ? (
             <div className="empty card">Nothing found. Try a broader category.</div>
+          ) : visible.length === 0 ? (
+            <div className="empty card">No leads match these filters.</div>
           ) : (
             <div className="lead-list">
-              {res.results.map((b) => (
+              {visible.map(({ business: b, score }) => (
                 <LeadCard
                   key={b.key}
                   business={b}
                   selected={selected === b.key}
                   onSelect={() => setSelected(b.key)}
-                  aside={<SiteStatusBadge check={s.checks[b.key]} />}
+                  aside={
+                    <div className="badges">
+                      <ScoreBadge score={score} />
+                      <SiteStatusBadge check={s.checks[b.key]} />
+                    </div>
+                  }
                   footer={
                     <p className="muted small lead-site">
                       {b.website ? displayHost(b.website) : b.instagram ? `Instagram: @${b.instagram}` : 'No website listed'}

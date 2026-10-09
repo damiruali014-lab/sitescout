@@ -16,7 +16,13 @@ export interface SearchState {
   error?: string
   /** Website check per business key */
   checks: Record<string, SiteCheck | 'pending'>
+  filter: SiteFilter
+  sort: SortKey
+  minRating: number
 }
+
+export type SiteFilter = 'all' | 'none' | 'poor' | 'ok'
+export type SortKey = 'score' | 'rating' | 'reviews' | 'name'
 
 const KEY = 'sitescout-search-v1'
 const initial: SearchState = {
@@ -26,6 +32,9 @@ const initial: SearchState = {
   lang: 'en',
   loading: false,
   checks: {},
+  filter: 'all',
+  sort: 'score',
+  minRating: 0,
   ...readSession<Partial<SearchState>>(KEY),
 }
 initial.loading = false

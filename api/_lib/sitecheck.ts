@@ -28,7 +28,7 @@ function socialHost(host: string): string | undefined {
   return SOCIAL_HOSTS.find((s) => h === s || h.endsWith('.' + s))
 }
 
-function isPrivateIp(ip: string): boolean {
+export function isPrivateIp(ip: string): boolean {
   if (isIP(ip) === 4) {
     const [a, b] = ip.split('.').map(Number)
     return (
