@@ -239,3 +239,21 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 **What went wrong / surprises:**
 - The demo key's limits weren't in the docs I read. A real request told me ("Length of parameter 'page_size' should be from 1 to 10"). The real-key tests keep paying off.
 - The client-side session cache key didn't include the country or the count. The same search with a different count would have shown stale results. Fixed.
+
+---
+
+## Step 11 — Faster city picker + business category list
+
+**Prompt:** "The cities list is lagging, and add a list of business categories."
+
+**What I built:**
+- Replaced the native `<datalist>` with a small custom **Combobox** component.
+  - Clicking it shows the whole list immediately. With a value already filled in, `<datalist>` on macOS showed only that one match, so it felt stuck.
+  - Typing filters as you go. Matching ignores accents and case, so "krakow" finds "Kraków", and names that start with your text come first.
+  - Full keyboard support (↑ ↓ Enter Esc) and proper ARIA roles.
+  - Measured in a test browser: typing feels instant (about 40 ms for 6 keystrokes).
+- **45 business categories** in 9 groups (beauty, health, sport, food, shops, auto, services, education, stay), each shown with its Russian name. You can still type your own.
+- **Smarter queries:** for 2GIS the app sends the Russian term ("барбершоп"), because 2GIS's catalogue is Russian-first. Google gets the English one. Custom text is sent unchanged. 2 new tests (33 total).
+
+**What went wrong / surprises:**
+- The dev server had stopped between sessions, so my first test run failed with "connection refused", not because of a code bug. I restarted it and the tests passed.

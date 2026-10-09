@@ -1,5 +1,6 @@
 import { requireOwner } from './_lib/auth.js'
 import { TtlCache } from './_lib/cache.js'
+import { categoryQuery } from './_lib/categories.js'
 import { findCountry, MAX_RESULTS } from './_lib/countries.js'
 import { dgisSearch, isKazakhCity } from './_lib/dgis.js'
 import { googleSearch } from './_lib/google.js'
@@ -43,12 +44,12 @@ export async function POST(request: Request): Promise<Response> {
     let result: SearchResponse
     if (provider === '2gis') {
       if (!dgisKey) return error('DGIS_API_KEY is not set on the server.', 503)
-      result = await dgisSearch(dgisKey, { city, category, lang, limit, startPage: page ? Number(page) || 1 : 1 })
+      result = await dgisSearch(dgisKey, { city, category: categoryQuery(category, '2gis'), lang, limit, startPage: page ? Number(page) || 1 : 1 })
     } else {
       if (!googleKey) return error('GOOGLE_PLACES_API_KEY is not set on the server.', 503)
       result = await googleSearch(googleKey, {
         city,
-        category,
+        category: categoryQuery(category, 'google'),
         lang,
         limit,
         pageToken: page,

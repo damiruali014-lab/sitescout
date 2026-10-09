@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isEmbed } from '../lib/config'
+import { CATEGORIES } from '../../api/_lib/categories'
 import { COUNTRIES, findCountry, MAX_RESULTS } from '../../api/_lib/countries'
 import type { Lang, Provider } from '../../api/_lib/types'
+import { Combobox } from '../components/Combobox'
 import { LeadCard } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
 import { SearchIcon } from '../components/Icons'
@@ -14,6 +16,8 @@ import { countGroups, filterAndSort, scoreAll } from '../lib/leads'
 import { DEMO_PRESETS, demoSearch, findDemoPreset } from '../lib/demoData'
 import { useMode } from '../lib/modeContext'
 import { getSearchState, setSearchState, useSearchState, type SiteFilter, type SortKey } from '../lib/searchStore'
+
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c.en, hint: c.ru, group: c.group }))
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: 'en', label: 'English' },
@@ -27,6 +31,7 @@ export function SearchPage() {
   const [city, setCity] = useState(s.city)
   const [category, setCategory] = useState(s.category)
   const country = findCountry(s.country) ?? COUNTRIES[0]
+  const cityOptions = useMemo(() => country.cities.map((c) => ({ value: c })), [country])
   const navigate = useNavigate()
 
   // Demo mode: show sample results straight away so portfolio visitors see something on first paint.
@@ -152,18 +157,13 @@ export function SearchPage() {
           <label className="label" htmlFor="city">
             City
           </label>
-          <input id="city" className="input" list="city-list" value={city} onChange={(e) => setCity(e.target.value)} placeholder={`e.g. ${country.cities[0]}`} required maxLength={80} autoComplete="off" />
-          <datalist id="city-list">
-            {country.cities.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+          <Combobox id="city" value={city} onChange={setCity} options={cityOptions} placeholder={`e.g. ${country.cities[0]}`} required />
         </div>
         <div className="field field-wide">
           <label className="label" htmlFor="category">
             Business category
           </label>
-          <input id="category" className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. barbershops, dentists, cafés" required maxLength={80} />
+          <Combobox id="category" value={category} onChange={setCategory} options={CATEGORY_OPTIONS} placeholder="Pick or type, e.g. barbershops" required />
         </div>
         <div className="field">
           <label className="label" htmlFor="limit">

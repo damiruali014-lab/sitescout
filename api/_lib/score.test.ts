@@ -41,3 +41,15 @@ describe('scoreLead', () => {
     expect(scoreLead({ ...base, phone: undefined, website: 'x' }, { status: 'ok', checkedAt: at }).score).toBeGreaterThanOrEqual(0)
   })
 })
+
+import { categoryQuery } from './categories'
+describe('categoryQuery', () => {
+  it('sends Russian terms to 2GIS and English to Google for known categories', () => {
+    expect(categoryQuery('Barbershops', '2gis')).toBe('барбершоп')
+    expect(categoryQuery('барбершоп', 'google')).toBe('Barbershops')
+    expect(categoryQuery('  Dentists ', 'google')).toBe('Dentists')
+  })
+  it('passes custom text through unchanged', () => {
+    expect(categoryQuery('yurt rentals', '2gis')).toBe('yurt rentals')
+  })
+})
