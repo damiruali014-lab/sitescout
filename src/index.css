@@ -893,3 +893,16 @@ main {
   color: var(--muted);
   font-weight: 400;
 }
+@media (max-width: 400px) {
+  .nav {
+    gap: 0;
+  }
+  .nav a,
+  .nav .nav-btn {
+    padding: 6px 7px;
+    font-size: 0.85rem;
+  }
+}
+.nav-open {
+  white-space: nowrap;
+}

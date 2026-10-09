@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { isEmbed } from '../lib/config'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { LeadCard } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -11,7 +12,7 @@ import { displayHost } from '../lib/format'
 import { countGroups, filterAndSort, scoreAll } from '../lib/leads'
 import { DEMO_PRESETS, demoSearch, findDemoPreset } from '../lib/demoData'
 import { useMode } from '../lib/modeContext'
-import { setSearchState, useSearchState, type SiteFilter, type SortKey } from '../lib/searchStore'
+import { getSearchState, setSearchState, useSearchState, type SiteFilter, type SortKey } from '../lib/searchStore'
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: 'en', label: 'English' },
@@ -25,6 +26,14 @@ export function SearchPage() {
   const [city, setCity] = useState(s.city)
   const [category, setCategory] = useState(s.category)
   const navigate = useNavigate()
+
+  // Demo mode: show sample results straight away so portfolio visitors see something on first paint.
+  useEffect(() => {
+    if (mode === 'demo' && !getSearchState().response && !getSearchState().error) {
+      const preset = findDemoPreset(getSearchState().city, getSearchState().category) ?? DEMO_PRESETS[0]
+      setSearchState({ city: preset.city, category: preset.category, response: demoSearch(preset.id), checks: {} })
+    }
+  }, [mode])
 
   // Check every new result's website automatically (homepage only, batched).
   useEffect(() => {
@@ -89,7 +98,7 @@ export function SearchPage() {
       <div className="page-head">
         <div>
           <h1>Find businesses that need a website</h1>
-          <p className="muted">Search a city and category, check their websites and contact the best leads.</p>
+          {!isEmbed && <p className="muted">Search a city and category, check their websites and contact the best leads.</p>}
         </div>
         {canLive && (
           <div className="segmented" role="group" aria-label="Data mode">

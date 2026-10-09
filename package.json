@@ -1,6 +1,8 @@
 {
   "name": "sitescout",
   "private": true,
+  "description": "Find small businesses that need a website, check their site, score the lead, generate a demo page and outreach message.",
+  "engines": { "node": ">=20" },
   "version": "0.1.0",
   "type": "module",
   "scripts": {

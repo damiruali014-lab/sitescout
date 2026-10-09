@@ -170,3 +170,32 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - On 360 px the status filter labels wrapped ("All / 3" on two lines). They're now `nowrap`, and the group scrolls horizontally instead.
 - TypeScript caught that spreading a `Partial<>` over a new lead could leave `source`/`sourceId` undefined. Fixed by setting them explicitly.
 - I can't run a real Supabase here, so I parsed both SQL migrations with `pglast` (the real Postgres parser) to catch syntax errors before you run them.
+
+---
+
+## Step 8 — Polish, embed mode, README
+
+**Prompt:** "Demo mode must work inside an iframe on my portfolio's Live Stage at 360px wide. Keep it calm and clean."
+
+**What I built:**
+- **Embed mode** (`?embed=1`): forces Demo mode, hides the footer and the subtitle, and adds an "Open ↗" link to the full app. It's remembered while you navigate inside the iframe.
+- **Instant first paint in Demo mode:** sample results show immediately, so the Live Stage is never an empty form.
+- Compact nav under 400 px, so Search · Tracker · Open ↗ · theme fit at 360 px next to the logo.
+- README with setup, keys and costs, Supabase steps, Vercel deploy, the iframe snippet, and a "terms, privacy and safety" section.
+
+**Final checks:**
+- `npm run build` ✓ · `npm run lint` (warnings fail) ✓ · `npm test`: 27 unit tests ✓.
+- Playwright end-to-end flow at 360 px inside `?embed=1` ✓. No console errors and no horizontal scroll on any screen at 360 px, in light and dark.
+- `/api/*` without login returns a clear error. With auth skipped locally, the real website check correctly classified wikipedia.org (OK), info.cern.ch (not mobile-friendly) and 10.0.0.1 (refused).
+
+**Not yet verified, needs real keys:** live Google/2GIS responses (adapters tested with mocked API responses), Supabase writes (SQL parsed with the real Postgres parser, not executed), and Claude output quality in Kazakh.
+
+---
+
+## Time & lessons
+
+- 8 steps, each one: prompt → build → lint → commit. Roughly half a day of agent time for the first version.
+- Most useful habits:
+  - (1) Decide the **data/terms rules before coding**. The "store only IDs" rule shaped the database design.
+  - (2) Put **anything the AI must never get wrong** (opt-out line, link) in code, not in the prompt.
+  - (3) A single end-to-end test caught a bug that unit tests and screenshots didn't.

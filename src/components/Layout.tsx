@@ -32,6 +32,11 @@ export function Layout() {
               ) : (
                 <NavLink to="/login">Log in</NavLink>
               ))}
+            {isEmbed && (
+              <a href={window.location.origin + '/'} target="_blank" rel="noreferrer" className="nav-open" title="Open the full app in a new tab">
+                Open ↗
+              </a>
+            )}
             <button
               type="button"
               className="btn btn-ghost icon-btn"
