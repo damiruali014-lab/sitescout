@@ -97,7 +97,17 @@ async function searchPage(apiKey: string, body: Record<string, unknown>) {
  */
 export async function googleSearch(
   apiKey: string,
-  opts: { city: string; category: string; lang: Lang; countryName?: string; regionCode?: string; limit: number; pageToken?: string },
+  opts: {
+    city: string
+    category: string
+    lang: Lang
+    countryName?: string
+    regionCode?: string
+    /** Exact Google place type, e.g. barber_shop — only places of that type are returned */
+    includedType?: string
+    limit: number
+    pageToken?: string
+  },
 ): Promise<SearchResponse> {
   const { city, category, lang, limit } = opts
   const query = `${category} in ${city}${opts.countryName ? ', ' + opts.countryName : ''}`
@@ -110,6 +120,7 @@ export async function googleSearch(
       pageSize: Math.min(20, Math.max(1, limit - results.length)),
       languageCode: lang,
       ...(opts.regionCode ? { regionCode: opts.regionCode.toLowerCase() } : {}),
+      ...(opts.includedType ? { includedType: opts.includedType, strictTypeFiltering: true } : {}),
       ...(token ? { pageToken: token } : {}),
     }).catch((e) => {
       if (requests === 0) throw e

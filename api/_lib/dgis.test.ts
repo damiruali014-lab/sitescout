@@ -46,6 +46,11 @@ describe('dgisSearch paging', () => {
     const res2 = await dgisSearch('k', { city: 'Almaty', category: 'x', lang: 'ru', limit: 15 })
     expect(res2.results).toHaveLength(15)
     expect(res2.requests).toBe(2)
+    const byRubric = await dgisSearch('k', { city: 'Almaty', category: 'языковые курсы', lang: 'ru', limit: 5, rubricId: '675' })
+    const last = new URL(calls[calls.length - 1])
+    expect(last.searchParams.get('rubric_id')).toBe('675')
+    expect(last.searchParams.has('q')).toBe(false)
+    expect(byRubric.results.length).toBe(5)
   })
 })
 

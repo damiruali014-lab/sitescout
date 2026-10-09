@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { Business, Lang, Provider, SearchResponse, SiteCheck } from '../../api/_lib/types'
+import { COUNTRIES } from '../../api/_lib/countries'
 import { readSession, writeSession } from './storage'
 
 /**
@@ -47,6 +48,12 @@ const initial: SearchState = {
   ...readSession<Partial<SearchState>>(KEY),
 }
 initial.loading = false
+// Older saved sessions could hold a city from another country — snap back to a consistent pair.
+{
+  const c = COUNTRIES.find((x) => x.code === initial.country)
+  const known = COUNTRIES.find((x) => x.cities.some((city) => city.toLowerCase() === initial.city.toLowerCase()))
+  if (c && known && known.code !== c.code) initial.city = c.cities[0]
+}
 for (const [k, v] of Object.entries(initial.checks)) if (v === 'pending') delete initial.checks[k]
 
 let state: SearchState = initial

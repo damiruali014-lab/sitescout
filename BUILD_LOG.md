@@ -257,3 +257,22 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 
 **What went wrong / surprises:**
 - The dev server had stopped between sessions, so my first test run failed with "connection refused", not because of a code bug. I restarted it and the tests passed.
+
+---
+
+## Step 12 — Precise categories + country/city fix
+
+**Prompt:** "When I select educational courses it gives me cosmetics and stuff, so the filters aren't working well. And when I change country (KZ → France) the city should change immediately; it stayed on Almaty."
+
+**Why it happened:**
+- **Wrong categories:** the search sent plain text. 2GIS matched "учебный центр / курсы" to "beauty master training courses", because those are courses too.
+- **Stale city:** the city lived in the component's local state, while the country lived in the shared store. After a reload, the country came back from the store but the city reset to the default "Almaty", giving mismatches like Germany + Almaty.
+
+**What I built:**
+- **Exact category matching:**
+  - 2GIS: each known category maps to a **rubric id** (e.g. Language schools → 675, Barbershops → 110998). The search then uses `rubric_id` instead of free text. I looked up all 45 terms with the real `/2.0/catalog/rubric/search` and chose the right rubric by hand. "Beauty salons" and a few others have no single rubric, so they still use text.
+  - Google: each category maps to a **place type** with `strictTypeFiltering`. I checked every type against the real API using the free `places.id`-only field mask. 9 of my guesses (e.g. `language_school`, `driving_school`, `tattoo_shop`) don't exist in Google, so those categories use text only.
+- **City always follows country:** city and category now live in the shared store. Changing country always switches to that country's main city. Old sessions that saved a city from another country are corrected on load.
+- Tests updated (33).
+
+**Cost note:** the Google type check cost $0 (the IDs-only SKU is free). The 2GIS rubric lookup used about 45 of the ~1,000 demo-key requests.

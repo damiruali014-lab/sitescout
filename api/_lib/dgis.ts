@@ -156,14 +156,14 @@ async function regionId(key: string, city: string): Promise<string> {
 /** Collects up to `limit` businesses by walking 2GIS pages. Each page is one billed request. */
 export async function dgisSearch(
   key: string,
-  opts: { city: string; category: string; lang: Lang; limit: number; startPage?: number },
+  opts: { city: string; category: string; lang: Lang; limit: number; startPage?: number; rubricId?: string },
 ): Promise<SearchResponse> {
   const out: Business[] = []
   let page = opts.startPage ?? 1
   let requests = 0
   let last: SearchResponse | undefined
   while (out.length < opts.limit && page <= MAX_PAGE) {
-    last = await dgisSearchPage(key, opts.city, opts.category, opts.lang, page)
+    last = await dgisSearchPage(key, opts.city, opts.category, opts.lang, page, opts.rubricId)
     requests++
     out.push(...last.results)
     if (!last.next) break
@@ -187,11 +187,13 @@ async function dgisSearchPage(
   category: string,
   lang: Lang,
   page = 1,
+  rubricId?: string,
 ): Promise<SearchResponse> {
   const region_id = await regionId(key, city)
   const locale = dgisLocale(lang)
+  // A rubric id gives exactly that category; free text can drift ("courses" → beauty-training courses).
   const params = {
-    q: category.trim(),
+    ...(rubricId ? { rubric_id: rubricId } : { q: category.trim() }),
     region_id,
     type: 'branch',
     page: String(page),

@@ -16,12 +16,14 @@ describe('googleSearch paging', () => {
         return new Response(JSON.stringify({ places, nextPageToken: n < 3 ? `tok${n}` : undefined }))
       }),
     )
-    const res = await googleSearch('k', { city: 'Kraków', category: 'dentists', lang: 'en', limit: 45, countryName: 'Poland', regionCode: 'PL' })
+    const res = await googleSearch('k', { city: 'Kraków', category: 'dentists', lang: 'en', limit: 45, countryName: 'Poland', regionCode: 'PL', includedType: 'dentist' })
     expect(res.results).toHaveLength(45)
     expect(res.requests).toBe(3)
     expect(bodies.map((b) => b.pageSize)).toEqual([20, 20, 5])
     expect(bodies[0].textQuery).toBe('dentists in Kraków, Poland')
     expect(bodies[0].regionCode).toBe('pl')
+    expect(bodies[0].includedType).toBe('dentist')
+    expect(bodies[0].strictTypeFiltering).toBe(true)
     expect(bodies[1].pageToken).toBe('tok1')
   })
 

@@ -42,14 +42,14 @@ describe('scoreLead', () => {
   })
 })
 
-import { categoryQuery } from './categories'
-describe('categoryQuery', () => {
-  it('sends Russian terms to 2GIS and English to Google for known categories', () => {
-    expect(categoryQuery('Barbershops', '2gis')).toBe('барбершоп')
-    expect(categoryQuery('барбершоп', 'google')).toBe('Barbershops')
-    expect(categoryQuery('  Dentists ', 'google')).toBe('Dentists')
+import { resolveCategory } from './categories'
+describe('resolveCategory', () => {
+  it('uses exact 2GIS rubrics and Google types for known categories', () => {
+    expect(resolveCategory('Language schools', '2gis')).toEqual({ q: 'языковые курсы', rubricId: '675' })
+    expect(resolveCategory('Barbershops', 'google')).toEqual({ q: 'Barbershops', includedType: 'barber_shop' })
+    expect(resolveCategory('барбершоп', '2gis').rubricId).toBe('110998')
   })
-  it('passes custom text through unchanged', () => {
-    expect(categoryQuery('yurt rentals', '2gis')).toBe('yurt rentals')
+  it('passes custom text through unchanged, with no type filter', () => {
+    expect(resolveCategory('  yurt rentals ', '2gis')).toEqual({ q: 'yurt rentals' })
   })
 })

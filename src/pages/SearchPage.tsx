@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isEmbed } from '../lib/config'
 import { CATEGORIES } from '../../api/_lib/categories'
@@ -28,8 +28,12 @@ const LANGS: { value: Lang; label: string }[] = [
 export function SearchPage() {
   const { mode, canLive, setMode } = useMode()
   const s = useSearchState()
-  const [city, setCity] = useState(s.city)
-  const [category, setCategory] = useState(s.category)
+  // City/category live in the store (not local state) so they survive reloads and always
+  // match the selected country.
+  const city = s.city
+  const category = s.category
+  const setCity = (v: string) => setSearchState({ city: v })
+  const setCategory = (v: string) => setSearchState({ category: v })
   const country = findCountry(s.country) ?? COUNTRIES[0]
   const cityOptions = useMemo(() => country.cities.map((c) => ({ value: c })), [country])
   const navigate = useNavigate()
@@ -79,9 +83,8 @@ export function SearchPage() {
 
   function pickCountry(code: string) {
     const next = findCountry(code)
-    setSearchState({ country: code })
-    // Switch to the country's first city unless the typed city already belongs to it.
-    if (next && !next.cities.some((c) => c.toLowerCase() === city.trim().toLowerCase())) setCity(next.cities[0])
+    // Changing country always switches to that country's main city.
+    setSearchState({ country: code, ...(next ? { city: next.cities[0] } : {}) })
   }
 
   // Which provider will run, and roughly how many paid requests the search costs.
