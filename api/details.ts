@@ -1,13 +1,14 @@
 import { requireOwner } from './_lib/auth.js'
 import { getDetails } from './_lib/details.js'
 import { clientIp, error, json } from './_lib/http.js'
+import { flushUsage } from './_lib/usage.js'
 import { rateLimited } from './_lib/ratelimit.js'
 import { cleanLang, cleanText, readJson } from './_lib/validate.js'
 
 export const config = { maxDuration: 20 }
 
 /** POST { refs: [{source, sourceId}], level: 'basic'|'full', lang } → { results: { [key]: Business } } */
-export async function POST(request: Request): Promise<Response> {
+async function handle(request: Request): Promise<Response> {
   const denied = await requireOwner(request)
   if (denied) return denied
   if (rateLimited(`details:${clientIp(request)}`, 30)) return error('Too many requests — wait a minute.', 429)
@@ -19,4 +20,12 @@ export async function POST(request: Request): Promise<Response> {
   if (!refs.length) return json({ results: {} })
   const results = await getDetails(refs, body?.level === 'full' ? 'full' : 'basic', cleanLang(body?.lang))
   return json({ results })
+}
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    return await handle(request)
+  } finally {
+    await flushUsage() // record paid API calls for the Usage page
+  }
 }

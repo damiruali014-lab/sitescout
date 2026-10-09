@@ -1,5 +1,6 @@
 import { TtlCache } from './cache.js'
 import { mergeBranches } from './dedupe.js'
+import { track } from './usage.js'
 import type { Business, Lang, SearchResponse } from './types.js'
 
 /**
@@ -134,6 +135,7 @@ function toBusiness(item: DgisItem, lang: Lang, city?: string): Business {
 }
 
 async function call<T>(path: string, params: Record<string, string>): Promise<{ meta: DgisMeta; result?: T }> {
+  track(path.includes('region') ? '2gis.regions' : '2gis.items')
   const url = new URL(path, BASE)
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })

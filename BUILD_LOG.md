@@ -317,3 +317,31 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - 3 new tests (39 total). The e2e test passes, and the page has no horizontal scroll at 360 px.
 
 **Gotcha:** the preview put a second `<h1>` on the lead page. That's bad for accessibility, and it broke my e2e locator. In the preview, the business name is now styled text instead of a heading.
+
+## Step 15 — Usage meter (credits left for Google and 2GIS)
+
+**Prompt:** "I need some maybe graph that will show me how many credits are left for Google and to 2GIS."
+
+**Problem:** neither Google nor 2GIS has a simple "credits left" API, so the app counts its own paid calls.
+
+**What I built:**
+- **Tracking:** `api/_lib/usage.ts` adds `track(sku)` inside every paid call:
+  - Google: Text Search, Details Pro, Details Enterprise;
+  - 2GIS: items, regions;
+  - Claude.
+
+  Each endpoint flushes the counts to a Supabase `api_usage` table in a `finally` block. Errors are ignored, so a tracking failure never breaks a search. Migration 004 creates the table, and RLS is on: only the service role can read or write it.
+- **`/api/usage`** (owner-only) adds up the counts:
+  - Google: this month, since the free tiers reset on the 1st;
+  - 2GIS: per key, since `DGIS_KEY_CREATED`.
+
+  Free limits can be overridden with `QUOTA_*` env vars.
+- **Usage page** (top nav):
+  - one meter per quota showing "N left of limit";
+  - a warning badge at 80% and a limit badge at 100%, each with an icon and label;
+  - an approximate $ cost beyond the free tier;
+  - a Claude request count with cost estimate.
+- **Daily chart:** stacked bars for Google / 2GIS / Claude, with a palette validated with the dataviz script in both light and dark. It has a legend, a hover tooltip and a "Show as table" toggle. Phones get a 14-day chart.
+- **Demo mode** shows sample numbers so portfolio visitors can see the page.
+
+**Caveat:** calls made outside the app, or before this step, aren't counted. The page links to Google Cloud quotas and the 2GIS Platform Manager for the official numbers.

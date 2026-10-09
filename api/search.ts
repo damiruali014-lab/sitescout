@@ -5,6 +5,7 @@ import { findCountry, MAX_RESULTS } from './_lib/countries.js'
 import { dgisSearch, isKazakhCity } from './_lib/dgis.js'
 import { googleSearch } from './_lib/google.js'
 import { clientIp, env, error, json } from './_lib/http.js'
+import { flushUsage } from './_lib/usage.js'
 import { rateLimited } from './_lib/ratelimit.js'
 import type { SearchRequest, SearchResponse } from './_lib/types.js'
 import { cleanLang, cleanText, readJson } from './_lib/validate.js'
@@ -14,7 +15,7 @@ export const config = { maxDuration: 30 }
 // 10-minute dedupe cache (per warm instance). Not a long-term store — see google.ts.
 const cache = new TtlCache<SearchResponse>(10 * 60 * 1000, 100)
 
-export async function POST(request: Request): Promise<Response> {
+async function handle(request: Request): Promise<Response> {
   const denied = await requireOwner(request)
   if (denied) return denied
   if (rateLimited(`search:${clientIp(request)}`, 20)) return error('Too many searches — wait a minute.', 429)
@@ -65,5 +66,13 @@ export async function POST(request: Request): Promise<Response> {
   } catch (e) {
     console.error('search failed', e)
     return error((e as Error).message || 'Search failed', 502)
+  }
+}
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    return await handle(request)
+  } finally {
+    await flushUsage() // record paid API calls for the Usage page
   }
 }

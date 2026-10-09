@@ -1,4 +1,5 @@
 import { env } from './http.js'
+import { track } from './usage.js'
 
 /**
  * Minimal Claude Messages API call (no SDK — one fetch). Defaults to the cheapest model.
@@ -7,6 +8,7 @@ import { env } from './http.js'
 export async function askClaude(system: string, user: string, maxTokens = 300): Promise<string> {
   const key = env('ANTHROPIC_API_KEY')
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set on the server.')
+  track('claude.request')
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },

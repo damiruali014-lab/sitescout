@@ -13,7 +13,7 @@ export function Layout() {
 
   return (
     <div className="app">
-      <header className="topbar">
+      <header className={'topbar' + (session ? ' topbar-crowded' : '')}>
         <div className="container topbar-inner">
           <NavLink to="/" className="brand" aria-label="SiteScout home">
             <img src="/favicon.svg" alt="" />
@@ -24,6 +24,7 @@ export function Layout() {
               Search
             </NavLink>
             <NavLink to="/tracker">Tracker</NavLink>
+            {!isEmbed && <NavLink to="/usage">Usage</NavLink>}
             {supabaseConfigured && !forceDemo &&
               (session ? (
                 <button type="button" className="btn btn-ghost btn-sm nav-btn" onClick={() => supabase?.auth.signOut()}>

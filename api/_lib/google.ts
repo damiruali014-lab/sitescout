@@ -1,4 +1,5 @@
 import { mergeBranches } from './dedupe.js'
+import { track } from './usage.js'
 import type { Business, Lang, SearchResponse } from './types.js'
 
 /**
@@ -78,6 +79,7 @@ async function googleError(res: Response): Promise<Error> {
 }
 
 async function searchPage(apiKey: string, body: Record<string, unknown>) {
+  track('google.text_search')
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
@@ -143,6 +145,7 @@ export async function googleDetails(
   level: 'basic' | 'full',
   lang: Lang,
 ): Promise<Business> {
+  track(level === 'full' ? 'google.details_enterprise' : 'google.details_pro')
   const res = await fetch(
     `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=${lang}`,
     {

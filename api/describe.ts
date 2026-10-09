@@ -1,6 +1,7 @@
 import { requireOwner } from './_lib/auth.js'
 import { askClaude, businessFacts, LANG_NAME } from './_lib/claude.js'
 import { clientIp, error, json } from './_lib/http.js'
+import { flushUsage } from './_lib/usage.js'
 import { rateLimited } from './_lib/ratelimit.js'
 import { cleanContent, siteGroup, templateContent } from './_lib/sitecontent.js'
 import type { Business } from './_lib/types.js'
@@ -17,7 +18,7 @@ const SYSTEM =
   'Services are generic suggestions the owner will review. No emojis.'
 
 /** POST { business, lang } → { content: SiteContent, source: 'ai' | 'template' } */
-export async function POST(request: Request): Promise<Response> {
+async function handle(request: Request): Promise<Response> {
   const denied = await requireOwner(request)
   if (denied) return denied
   if (rateLimited(`ai:${clientIp(request)}`, 20)) return error('Too many AI requests — wait a minute.', 429)
@@ -44,5 +45,13 @@ export async function POST(request: Request): Promise<Response> {
   } catch (e) {
     console.error('describe AI failed, using template', e)
     return json({ content: fallback, source: 'template' })
+  }
+}
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    return await handle(request)
+  } finally {
+    await flushUsage() // record paid API calls for the Usage page
   }
 }
