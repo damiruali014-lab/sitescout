@@ -1,3 +1,4 @@
+import { mergeBranches } from './dedupe.js'
 import type { Business, Lang, SearchResponse } from './types.js'
 
 /**
@@ -112,12 +113,14 @@ export async function googleSearch(
   const { city, category, lang, limit } = opts
   const query = `${category} in ${city}${opts.countryName ? ', ' + opts.countryName : ''}`
   const results: Business[] = []
+  let merged: Business[] = []
   let token = opts.pageToken
   let requests = 0
+  // Page until we have `limit` DISTINCT businesses (same-name branches are merged).
   do {
     const data = await searchPage(apiKey, {
       textQuery: query,
-      pageSize: Math.min(20, Math.max(1, limit - results.length)),
+      pageSize: Math.min(20, Math.max(1, limit - merged.length)),
       languageCode: lang,
       ...(opts.regionCode ? { regionCode: opts.regionCode.toLowerCase() } : {}),
       ...(opts.includedType ? { includedType: opts.includedType, strictTypeFiltering: true } : {}),
@@ -129,8 +132,9 @@ export async function googleSearch(
     requests++
     for (const p of data.places ?? []) if (p.businessStatus !== 'CLOSED_PERMANENTLY') results.push(toBusiness(p, city))
     token = data.nextPageToken
-  } while (token && results.length < limit && requests < 3)
-  return { source: 'google', query, results: results.slice(0, limit), next: token, attribution: GOOGLE_ATTRIBUTION, requests }
+    merged = mergeBranches(results)
+  } while (token && merged.length < limit && requests < 3)
+  return { source: 'google', query, results: merged.slice(0, limit), next: token, attribution: GOOGLE_ATTRIBUTION, requests }
 }
 
 export async function googleDetails(

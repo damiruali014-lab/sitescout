@@ -8,6 +8,7 @@ import type { Business, SiteCheck, SiteStatus } from './types.js'
  *   Rating        up to 20  (≥4.7 → 20 · ≥4.5 → 16 · ≥4.0 → 11 · ≥3.5 → 5)
  *   Reviews       up to 20  (log scale: 10 → 8, 100 → 16, 300+ → 20)
  *   Reachable     10        (has phone / WhatsApp / Instagram / email)
+ *   Chain        −15        (3+ branches: marketing is usually decided at head office)
  */
 export type Tier = 'hot' | 'warm' | 'cold'
 
@@ -54,6 +55,12 @@ export function scoreLead(b: Business, check?: SiteCheck | 'pending'): LeadScore
 
   if (b.phone || b.whatsapp || b.instagram || b.email || b.contactsHidden) score += 10
   else reasons.push('No contact channel found')
+
+  // Chains (3+ branches) usually decide marketing centrally — a single branch rarely buys a website.
+  if ((b.branchCount ?? 1) >= 3) {
+    score -= 15
+    reasons.push(`Chain with ${b.branchCount} branches — decisions are usually made centrally`)
+  }
 
   score = Math.max(0, Math.min(100, score))
   return { score, tier: score >= 75 ? 'hot' : score >= 50 ? 'warm' : 'cold', reasons }

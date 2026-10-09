@@ -2,6 +2,7 @@ import { useEffect, useMemo, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isEmbed } from '../lib/config'
 import { CATEGORIES } from '../../api/_lib/categories'
+import { mergeBranches } from '../../api/_lib/dedupe'
 import { COUNTRIES, findCountry, MAX_RESULTS } from '../../api/_lib/countries'
 import type { Lang, Provider } from '../../api/_lib/types'
 import { Combobox } from '../components/Combobox'
@@ -73,7 +74,8 @@ export function SearchPage() {
       const res = await liveSearch({ country: s.country, city: c, category: k, limit: s.limit, provider: s.provider, lang: s.lang, page })
       setSearchState((prev) => ({
         loading: false,
-        response: page && prev.response ? { ...res, results: [...prev.response.results, ...res.results] } : res,
+        // Merge again so a branch that arrives on the next page joins its chain instead of duplicating it.
+        response: page && prev.response ? { ...res, results: mergeBranches([...prev.response.results, ...res.results]) } : res,
         checks: page ? prev.checks : {},
       }))
     } catch (e) {
@@ -107,7 +109,10 @@ export function SearchPage() {
   const res = s.response
   const scored = useMemo(() => (res ? scoreAll(res.results, s.checks) : []), [res, s.checks])
   const counts = useMemo(() => countGroups(scored), [scored])
-  const visible = useMemo(() => filterAndSort(scored, s.filter, s.sort, s.minRating), [scored, s.filter, s.sort, s.minRating])
+  const visible = useMemo(
+    () => filterAndSort(scored, s.filter, s.sort, s.minRating, s.hideChains),
+    [scored, s.filter, s.sort, s.minRating, s.hideChains],
+  )
   const FILTERS: { value: SiteFilter; label: string }[] = [
     { value: 'all', label: `All ${counts.all}` },
     { value: 'none', label: `No site ${counts.none}` },
@@ -270,6 +275,10 @@ export function SearchPage() {
                   <option value={4}>4.0+</option>
                   <option value={4.5}>4.5+</option>
                 </select>
+              </label>
+              <label className="row small muted check">
+                <input type="checkbox" checked={s.hideChains} onChange={(e) => setSearchState({ hideChains: e.target.checked })} />
+                Hide chains (3+ branches)
               </label>
             </div>
           )}

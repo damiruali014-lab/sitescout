@@ -20,9 +20,18 @@ function siteGroup(l: ScoredLead): SiteFilter | 'pending' {
   return status ? 'poor' : 'pending'
 }
 
-export function filterAndSort(leads: ScoredLead[], filter: SiteFilter, sort: SortKey, minRating: number): ScoredLead[] {
+export function filterAndSort(
+  leads: ScoredLead[],
+  filter: SiteFilter,
+  sort: SortKey,
+  minRating: number,
+  hideChains = false,
+): ScoredLead[] {
   const out = leads.filter(
-    (l) => (filter === 'all' || siteGroup(l) === filter) && (minRating === 0 || (l.business.rating ?? 0) >= minRating),
+    (l) =>
+      (filter === 'all' || siteGroup(l) === filter) &&
+      (minRating === 0 || (l.business.rating ?? 0) >= minRating) &&
+      (!hideChains || (l.business.branchCount ?? 1) < 3),
   )
   const by: Record<SortKey, (a: ScoredLead, b: ScoredLead) => number> = {
     score: (a, b) => b.score.score - a.score.score || (b.business.reviews ?? 0) - (a.business.reviews ?? 0),

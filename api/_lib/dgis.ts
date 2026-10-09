@@ -1,4 +1,5 @@
 import { TtlCache } from './cache.js'
+import { mergeBranches } from './dedupe.js'
 import type { Business, Lang, SearchResponse } from './types.js'
 
 /**
@@ -12,8 +13,8 @@ const BASE = 'https://catalog.api.2gis.com'
 // Demo keys allow page_size ≤ 10 and page ≤ 5 (so 50 results max). Paid keys allow more — override via env.
 const PAGE_SIZE = Number(process.env.DGIS_PAGE_SIZE) || 10
 const MAX_PAGE = Number(process.env.DGIS_MAX_PAGE) || 5
-const FIELDS_FULL = 'items.name_ex,items.address,items.contact_groups,items.schedule,items.reviews,items.rubrics,items.point'
-const FIELDS_NO_CONTACTS = 'items.name_ex,items.address,items.schedule,items.reviews,items.rubrics,items.point'
+const FIELDS_FULL = 'items.org,items.name_ex,items.address,items.contact_groups,items.schedule,items.reviews,items.rubrics,items.point'
+const FIELDS_NO_CONTACTS = 'items.org,items.name_ex,items.address,items.schedule,items.reviews,items.rubrics,items.point'
 
 export const DGIS_ATTRIBUTION = 'Business data © 2GIS'
 
@@ -61,6 +62,7 @@ interface DgisItem {
   id: string
   name?: string
   name_ex?: { primary?: string; extension?: string }
+  org?: { id?: string; branch_count?: number }
   address_name?: string
   full_name?: string
   address?: { components?: unknown }
@@ -125,6 +127,8 @@ function toBusiness(item: DgisItem, lang: Lang, city?: string): Business {
     reviews: item.reviews?.general_review_count ?? item.reviews?.org_review_count,
     hours: formatSchedule(item.schedule, lang),
     mapsUrl: `https://2gis.kz/firm/${numericId}`,
+    chainId: item.org?.id ? `2gis-org:${item.org.id}` : undefined,
+    branchCount: item.org?.branch_count,
     city,
   }
 }
@@ -162,10 +166,13 @@ export async function dgisSearch(
   let page = opts.startPage ?? 1
   let requests = 0
   let last: SearchResponse | undefined
-  while (out.length < opts.limit && page <= MAX_PAGE) {
+  let merged: Business[] = []
+  // Keep paging until we have `limit` DISTINCT businesses (branches of one chain count once).
+  while (merged.length < opts.limit && page <= MAX_PAGE) {
     last = await dgisSearchPage(key, opts.city, opts.category, opts.lang, page, opts.rubricId)
     requests++
     out.push(...last.results)
+    merged = mergeBranches(out)
     if (!last.next) break
     page = Number(last.next)
   }
@@ -173,8 +180,8 @@ export async function dgisSearch(
   return {
     source: '2gis',
     query: `${opts.category} — ${opts.city}`,
-    results: out.slice(0, opts.limit),
-    next: out.length >= opts.limit ? more : undefined,
+    results: merged.slice(0, opts.limit),
+    next: merged.length >= opts.limit ? more : undefined,
     attribution: DGIS_ATTRIBUTION,
     notice: last?.notice,
     requests,

@@ -24,6 +24,8 @@ export interface SearchState {
   filter: SiteFilter
   sort: SortKey
   minRating: number
+  /** Hide businesses with 3+ branches */
+  hideChains: boolean
   /** Published demo page URL per business key */
   pages: Record<string, string>
 }
@@ -44,6 +46,7 @@ const initial: SearchState = {
   filter: 'all',
   sort: 'score',
   minRating: 0,
+  hideChains: false,
   pages: {},
   ...readSession<Partial<SearchState>>(KEY),
 }

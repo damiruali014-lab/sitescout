@@ -986,3 +986,12 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.check {
+  gap: 6px;
+  cursor: pointer;
+}
+.check input {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+}

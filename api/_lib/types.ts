@@ -27,6 +27,12 @@ export interface Business {
   city?: string
   /** The provider hid contacts (e.g. 2GIS demo key) — website is unknown, NOT missing */
   contactsHidden?: boolean
+  /** Same brand / organisation id — branches of one chain share it (2GIS org id, or normalised name for Google) */
+  chainId?: string
+  /** Total branches of the organisation, when the provider knows it (2GIS) */
+  branchCount?: number
+  /** Addresses of other branches found in this search (merged into one card) */
+  otherAddresses?: string[]
 }
 
 export interface SearchRequest {

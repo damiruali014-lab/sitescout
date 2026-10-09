@@ -31,10 +31,16 @@ export function LeadCard({ business: b, selected, onSelect, aside, footer }: Pro
         <div className="lead-meta">
           {b.category && <span>{b.category}</span>}
           <Rating rating={b.rating} reviews={b.reviews} />
+          {(b.branchCount ?? 1) > 1 && (
+            <span className="badge" title="Branches of the same business are shown as one result">
+              Chain · {b.branchCount} branches
+            </span>
+          )}
         </div>
         {b.address && (
           <p className="lead-address muted small">
             <PinIcon size={13} /> {b.address}
+            {b.otherAddresses?.length ? <span> · +{b.otherAddresses.length} more in this search</span> : null}
           </p>
         )}
         {footer}

@@ -30,7 +30,7 @@ describe('googleSearch paging', () => {
   it('uses a single cheap request for small limits', async () => {
     const fetchMock = vi.fn(async (_u: string, init: RequestInit) => {
       const { pageSize } = JSON.parse(String(init.body))
-      const places = Array.from({ length: pageSize }, (_, i) => ({ id: `a${i}` }))
+      const places = Array.from({ length: pageSize }, (_, i) => ({ id: `a${i}`, displayName: { text: `Cafe ${i}` } }))
       return new Response(JSON.stringify({ places, nextPageToken: 't' }))
     })
     vi.stubGlobal('fetch', fetchMock)

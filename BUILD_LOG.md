@@ -276,3 +276,17 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - Tests updated (33).
 
 **Cost note:** the Google type check cost $0 (the IDs-only SKU is free). The 2GIS rubric lookup used about 45 of the ~1,000 demo-key requests.
+
+---
+
+## Step 13 — One result per business (merge chain branches)
+
+**Prompt:** "It can give 4 similar results at the same time with different addresses, but it should know it's literally the same thing." (Screenshot: 4× "Logovo" barbershop in Astana.)
+
+**What I built:**
+- **2GIS** returns an `org` object for every branch, with the organisation id and its total `branch_count`. It's free, needs no extra permission, and I confirmed it with a real request: Logovo = org 70000001061804530, 17 branches. Branches with the same org id are merged into **one result**. The busiest branch (most reviews) represents the chain, and the other addresses are listed on it.
+- **Google** has no org id, so places with the same normalised name (case, accents and punctuation ignored) are merged.
+- **"How many" now counts distinct businesses.** The server keeps paging, within the API limits, until it has that many *different* businesses. "Load more" merges again, so a branch arriving on the next page joins its chain.
+- **Chains score lower:** 3+ branches gives −15, with the reason "decisions are usually made centrally". A single barbershop owner decides on the spot; a 17-branch chain has a head office. A new **"Hide chains (3+ branches)"** filter is in the toolbar.
+- Cards show "Chain · 17 branches · +3 more in this search", and the lead page lists the other addresses.
+- 3 new tests built from the real Astana response (36 total).

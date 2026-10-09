@@ -161,6 +161,19 @@ export function LeadPage() {
                 <dd>{b.address}</dd>
               </div>
             )}
+            {(b.branchCount ?? 1) > 1 && (
+              <div>
+                <dt>Chain</dt>
+                <dd>
+                  {b.branchCount} branches{b.otherAddresses?.length ? ' — also at:' : ''}
+                  {b.otherAddresses?.map((a) => (
+                    <div key={a} className="muted small">
+                      {a}
+                    </div>
+                  ))}
+                </dd>
+              </div>
+            )}
             {b.hours && (
               <div>
                 <dt>

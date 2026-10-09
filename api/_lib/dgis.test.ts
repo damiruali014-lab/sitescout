@@ -34,7 +34,7 @@ describe('dgisSearch paging', () => {
         calls.push(u)
         if (u.includes('region/search')) return new Response(JSON.stringify({ meta: { code: 200 }, result: { items: [{ id: '67' }] } }))
         const page = Number(new URL(u).searchParams.get('page'))
-        const items = Array.from({ length: 10 }, (_, i) => ({ ...realItem, id: `${page}${i}_x` }))
+        const items = Array.from({ length: 10 }, (_, i) => ({ ...realItem, id: `${page}${i}_x`, name_ex: { primary: `Salon ${page}-${i}` } }))
         return new Response(JSON.stringify({ meta: { code: 200 }, result: { total: 5920, items } }))
       }),
     )
