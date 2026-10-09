@@ -1,0 +1,60 @@
+/** Shared types — imported by both the /api functions and the React app. Keep this file dependency-free. */
+
+export type Source = 'google' | '2gis' | 'demo'
+export type Provider = 'auto' | 'google' | '2gis'
+export type Lang = 'en' | 'ru' | 'kk'
+
+export interface Business {
+  /** Stable key: `${source}:${sourceId}` */
+  key: string
+  source: Source
+  /** Google place ID / 2GIS item ID — the only thing we store long-term */
+  sourceId: string
+  name: string
+  category?: string
+  address?: string
+  phone?: string
+  website?: string
+  /** Extra contact channels (2GIS often lists these) */
+  instagram?: string
+  whatsapp?: string
+  email?: string
+  rating?: number
+  reviews?: number
+  /** Human-readable opening hours, one line per day */
+  hours?: string[]
+  mapsUrl?: string
+  city?: string
+}
+
+export interface SearchRequest {
+  city: string
+  category: string
+  provider?: Provider
+  /** Opaque cursor from a previous response ("load more") */
+  page?: string
+  lang?: Lang
+}
+
+export interface SearchResponse {
+  source: Source
+  query: string
+  results: Business[]
+  next?: string
+  /** Attribution text the UI must show next to provider data */
+  attribution: string
+  notice?: string
+  cached?: boolean
+}
+
+export type SiteStatus = 'none' | 'unreachable' | 'no_https' | 'no_viewport' | 'ok'
+
+export interface SiteCheck {
+  status: SiteStatus
+  url?: string
+  finalUrl?: string
+  httpStatus?: number
+  ms?: number
+  note?: string
+  checkedAt: string
+}
