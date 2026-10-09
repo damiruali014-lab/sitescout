@@ -335,6 +335,7 @@ main {
 }
 .segmented {
   display: inline-flex;
+  align-self: flex-start;
   padding: 3px;
   gap: 2px;
   border-radius: var(--radius-sm);
@@ -823,4 +824,8 @@ main {
 .landing-footer .landing-wrap {
   display: grid;
   gap: 6px;
+}
+.msg-text {
+  min-height: 200px;
+  font-size: 0.92rem;
 }

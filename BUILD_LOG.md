@@ -121,3 +121,24 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - The new React lint rule `set-state-in-effect` flagged my first version of the data loading. I refactored: demo data is now *derived during render* (`useMemo`), and the effect only handles the remote fetch.
 - Opening a lead straight from a link showed "Not checked", because checks only ran on the search page. The lead page now runs the check for that one lead.
 - The Kazakh UI strings and templates are my best effort; **they need a native-speaker review.**
+
+---
+
+## Step 6 — Outreach message (RU / KK / EN)
+
+**Prompt:** "Generate a short, personal first message for WhatsApp/Instagram/email that mentions something specific about that business and links its demo page. Language selectable: Russian, Kazakh or English. Include a polite one-line opt-out."
+
+**What I built:**
+- `api/_lib/outreach.ts`, shared by the browser and the API:
+  - `hookDetail()` picks **one specific, verifiable detail**: rating + review count if there are 50+ reviews, otherwise a great rating, otherwise their street.
+  - `issueLine()` states the actual website problem in plain words ("opens without HTTPS, browsers mark it Not secure", "only a social media page", …).
+  - Templates in 3 languages × 3 channels. Email gets a subject and a signature.
+  - **The opt-out line is appended by code, never by the AI**, so it can't be forgotten or reworded.
+- `/api/message`: one Claude Haiku call. The prompt tells it exactly which detail to use, the word limit per channel, the link to include once, and "no invented facts". If the model drops the link, the code adds it back. If the AI fails, the response falls back to the template and says so in the UI.
+- Message card on the lead page: pick a channel and language, edit the text, then copy it or open WhatsApp/email with the message pre-filled. **You always send it yourself**; nothing is sent automatically.
+- In Demo mode, "Open WhatsApp" is disabled, because the numbers are fictional.
+- 6 new unit tests (27 total). They check that every language ends with its opt-out line, that the link appears exactly once, and that only email gets a subject and signature.
+
+**What went wrong / surprises:**
+- In a column layout, the segmented channel picker stretched to full width. I fixed it with `align-self: flex-start`.
+- The first draft wrapped the Copy button in a `<span onClick>` to log "sent". I replaced it with a proper `onCopied` callback, which is more accessible and is also what the tracker uses next.

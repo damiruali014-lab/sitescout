@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { scoreLead } from '../../api/_lib/score'
 import { DemoPageCard } from '../components/DemoPageCard'
+import { MessageCard } from '../components/MessageCard'
 import { ArrowLeftIcon, ClockIcon, ExternalIcon, GlobeIcon, PhoneIcon, PinIcon } from '../components/Icons'
 import { Rating } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -85,7 +86,7 @@ export function LeadPage() {
 
           <DemoPageCard business={b} live={live} />
 
-          <div id="message-slot" />
+          <MessageCard business={b} check={check} live={live} />
         </div>
 
         <aside className="card stack-sm contact-card" aria-labelledby="contact-h">
