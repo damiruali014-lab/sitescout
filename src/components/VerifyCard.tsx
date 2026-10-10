@@ -60,7 +60,7 @@ export function VerifyCard({ business: b, live, onEnrich }: Props) {
     try {
       const result = await apiPost<BioResult>('/api/instagram', { handle })
       setIg({ result })
-      onEnrich({ instagram: `@${result.handle}`, ...(result.kind === 'own_site' && result.website ? { website: result.website } : {}) })
+      onEnrich({ instagram: `@${result.handle}`, ...((result.kind === 'own_site' || result.kind === 'booking') && result.website ? { website: result.website } : {}) })
     } catch (e) {
       setIg({ err: (e as Error).message })
     }
@@ -168,7 +168,11 @@ export function VerifyCard({ business: b, live, onEnrich }: Props) {
                 Website in bio: <a href={/^https?:/.test(igResult.website!) ? igResult.website : `https://${igResult.website}`} target="_blank" rel="noreferrer nofollow">{displayHost(igResult.website!)}</a> — not a lead. {hideButton(igResult.website, 'instagram')}
               </>
             )}
-            {igResult.kind === 'booking' && <>Only a booking page ({displayHost(igResult.website!)}) — no own website, still a good lead ✓</>}
+            {igResult.kind === 'booking' && (
+              <>
+                Uses a booking platform ({displayHost(igResult.website!)}) — clients can already find and book them online, so probably not a lead. {hideButton(igResult.website, 'instagram')}
+              </>
+            )}
             {igResult.kind === 'link_in_bio' && <>Only a link-in-bio page ({displayHost(igResult.website!)}) — no real website, still a lead ✓</>}
             {igResult.kind === 'none' && <>No link in their bio — still a lead ✓</>}
             {igResult.followers != null && <span className="muted"> · {igResult.followers.toLocaleString()} followers</span>}

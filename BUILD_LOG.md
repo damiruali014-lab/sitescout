@@ -398,3 +398,5 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - **Undo:** an **Undo** link sits right on the lead page.
 
 **Fix along the way:** the lead page was 23 px wider than a 360 px phone because of the website preview. The grid column is now `minmax(0, 1fr)`.
+
+**Change (after feedback):** a business on a **booking platform** (Planity, Fresha, Treatwell…) is **not a lead**. Clients can already find and book it online, so it gets a "Hide this business" button like an own website. Link-in-bio pages (Linktree) are still treated as leads.

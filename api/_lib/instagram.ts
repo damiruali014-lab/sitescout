@@ -6,6 +6,7 @@ import type { BioResult, BioSiteKind } from './types.js'
  * https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/business-discovery
  * Reads PUBLIC fields (biography, website) of another Business/Creator account, queried through MY
  * own Instagram professional account. Needs (server env only):
+ * Own website or a booking platform (Planity, Fresha…) → not a lead; link-in-bio only → still a lead.
  *   IG_USER_ID       my Instagram professional account id (1784…)
  *   IG_ACCESS_TOKEN  long-lived token with instagram_basic, instagram_manage_insights, pages_read_engagement
  * Personal (non-business) and age-gated accounts can't be read — the UI says so.
