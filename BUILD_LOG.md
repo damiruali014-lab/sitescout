@@ -345,3 +345,56 @@ A running "How I built it" diary. After every major step: the prompt I gave, wha
 - **Demo mode** shows sample numbers so portfolio visitors can see the page.
 
 **Caveat:** calls made outside the app, or before this step, aren't counted. The page links to Google Cloud quotas and the 2GIS Platform Manager for the official numbers.
+
+## Step 16 — Mobile or landline? (no more dead WhatsApp links)
+
+**Prompt:** "I searched nail salons in Lyon, and WhatsApp said the number doesn't exist."
+
+**Why:** French salons list their landline (04… in Lyon). Landlines can't have WhatsApp, but the app opened `wa.me/<number>` anyway.
+
+**What I built:** `phone.ts` uses Google's libphonenumber metadata, offline and free, to label every number **mobile / landline / unknown**.
+- **Lead cards:** badges "Mobile" or "Landline · no WhatsApp".
+- **Message card:** a landline hides the WhatsApp button, explains why, and picks Instagram or Email as the default channel.
+- **Demo website:** its booking button falls back to a phone call.
+- Some countries, e.g. the US and Poland, don't separate mobile and landline ranges; those numbers stay "unknown".
+
+## Step 17 — OpenStreetMap: a free second source
+
+**Prompt:** "Don't depend only on Google Maps — I'll hit the limit fast with businesses that already have websites."
+
+**Problem:** Google gave 5 nail salons for Lyon, each request costs quota, and many results already had a website.
+
+**What I built:**
+- **OSM source:** Nominatim (city → map area) plus Overpass (businesses in the area), with exact OSM tags for all 45 categories. It's free and has no monthly quota.
+- **Results:** businesses **without a listed website come first**, and paging is free from a 30-minute cache. A live test for Lyon found **54 nail salons, 49 with no website listed**.
+- **Default source:** OpenStreetMap is now the default for European countries. The source picker shows "Free — no quota used".
+- **"Check on Google" (1 request):** OSM has no ratings, and "no website" only means none is listed on the map. This button checks one chosen business on Google for its rating, reviews and website, so Google quota is spent only on leads I care about.
+- **Scoring:** OSM leads get neutral rating points, so they aren't buried below Google results.
+- **Saved leads:** the tracker and demo pages accept OSM leads (migration 005).
+
+**Gotcha:** the public Overpass server sometimes answers 504/500 when busy. It now retries with backoff, then tries a mirror.
+
+## Step 18 — Website in the Instagram bio
+
+**Problem:** the second salon had its website only in its Instagram bio.
+
+**What I built:**
+- **API:** the official **Instagram Graph API Business Discovery** reads public `biography` and `website` fields of business accounts through my own professional account. There's no scraping.
+- **Link classification:**
+  - an own website → **not a lead, hide it**;
+  - a booking page (Planity, Fresha, Treatwell…) → still a lead;
+  - link-in-bio pages (Linktree, Taplink…) → still a lead;
+  - no link → still a lead.
+
+  It also finds sites written in the bio text, and ignores emails.
+- **Fallback:** without the Meta app keys, the card shows **Open profile** or **Find their Instagram**, so I can check by hand.
+- **Rechecking:** a website found this way is run through the normal website check right away.
+
+## Step 19 — "Already has a website" → hidden forever
+
+**What I built:**
+- **Hiding:** one click hides a business from all future searches, with the website I found stored as optional. It uses a `hidden_places` table that stores only the provider key and my own verdict, never Google data. The table is server-only, behind the login.
+- **Search:** results skip hidden businesses and say "N hidden". For OSM the filter runs before paging, so pages stay full. Cached searches drop them too.
+- **Undo:** an **Undo** link sits right on the lead page.
+
+**Fix along the way:** the lead page was 23 px wider than a 360 px phone because of the website preview. The grid column is now `minmax(0, 1fr)`.

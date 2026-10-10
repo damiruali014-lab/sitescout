@@ -1,7 +1,7 @@
 /** Shared types — imported by both the /api functions and the React app. Keep this file dependency-free. */
 
-export type Source = 'google' | '2gis' | 'demo'
-export type Provider = 'auto' | 'google' | '2gis'
+export type Source = 'google' | '2gis' | 'osm' | 'demo'
+export type Provider = 'auto' | 'google' | '2gis' | 'osm'
 export type Lang = 'en' | 'ru' | 'kk'
 export type PhoneType = 'mobile' | 'landline' | 'unknown'
 
@@ -60,6 +60,8 @@ export interface SearchResponse {
   attribution: string
   notice?: string
   cached?: boolean
+  /** Businesses skipped because I marked them "already has a website" */
+  hidden?: number
   /** How many paid API requests this search used */
   requests?: number
 }
@@ -74,4 +76,15 @@ export interface SiteCheck {
   ms?: number
   note?: string
   checkedAt: string
+}
+
+/** What an Instagram bio says about a website (step 18) */
+export type BioSiteKind = 'own_site' | 'link_in_bio' | 'booking' | 'none'
+export interface BioResult {
+  handle: string
+  website?: string
+  kind: BioSiteKind
+  links: string[]
+  followers?: number
+  biography?: string
 }

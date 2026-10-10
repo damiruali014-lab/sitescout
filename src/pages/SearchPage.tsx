@@ -93,6 +93,7 @@ export function SearchPage() {
   const effectiveProvider = s.provider === 'auto' ? country.provider : s.provider
   const perPage = effectiveProvider === '2gis' ? 10 : 20
   const requestsNeeded = Math.ceil(s.limit / perPage)
+  const providerName = (p: string) => (p === '2gis' ? '2GIS' : p === 'osm' ? 'OpenStreetMap' : 'Google')
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -206,9 +207,10 @@ export function SearchPage() {
               Data source
             </label>
             <select id="provider" className="select" value={s.provider} onChange={(e) => setSearchState({ provider: e.target.value as Provider })}>
-              <option value="auto">Auto ({country.provider === '2gis' ? '2GIS' : 'Google'})</option>
-              <option value="google">Google Places</option>
-              <option value="2gis">2GIS</option>
+              <option value="auto">Auto ({providerName(country.provider)})</option>
+              <option value="osm">OpenStreetMap (free, no limit)</option>
+              <option value="google">Google Places (ratings, 1,000 free/month)</option>
+              <option value="2gis">2GIS (Kazakhstan)</option>
             </select>
           </div>
         )}
@@ -218,7 +220,9 @@ export function SearchPage() {
           </button>
           {mode === 'live' && (
             <span className="small muted">
-              ≈ {requestsNeeded} {effectiveProvider === '2gis' ? '2GIS' : 'Google'} request{requestsNeeded > 1 ? 's' : ''}
+              {effectiveProvider === 'osm'
+                ? 'Free — no quota used'
+                : `≈ ${requestsNeeded} ${providerName(effectiveProvider)} request${requestsNeeded > 1 ? 's' : ''}`}
             </span>
           )}
         </div>
@@ -250,6 +254,11 @@ export function SearchPage() {
             {res.cached && <span className="badge">cached</span>}
           </div>
           {res.notice && <div className="banner">{res.notice}</div>}
+          {(res.hidden ?? 0) > 0 && (
+            <p className="small muted">
+              {res.hidden} business{res.hidden === 1 ? '' : 'es'} hidden — you marked them as already having a website.
+            </p>
+          )}
           {res.results.length > 0 && (
             <div className="toolbar">
               <div className="segmented segmented-scroll" role="group" aria-label="Filter by website">

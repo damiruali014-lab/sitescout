@@ -1,6 +1,7 @@
 import { TtlCache } from './cache.js'
 import { DGIS_ATTRIBUTION, dgisDetails } from './dgis.js'
 import { GOOGLE_ATTRIBUTION, googleDetails } from './google.js'
+import { OSM_ATTRIBUTION, osmDetails } from './osm.js'
 import { env } from './http.js'
 import type { Business, Lang } from './types.js'
 
@@ -11,7 +12,7 @@ import type { Business, Lang } from './types.js'
 const cache = new TtlCache<Business>(10 * 60 * 1000, 300)
 
 export function attributionFor(source: string): string {
-  return source === '2gis' ? DGIS_ATTRIBUTION : GOOGLE_ATTRIBUTION
+  return source === '2gis' ? DGIS_ATTRIBUTION : source === 'osm' ? OSM_ATTRIBUTION : GOOGLE_ATTRIBUTION
 }
 
 export async function getDetails(
@@ -20,13 +21,14 @@ export async function getDetails(
   lang: Lang,
 ): Promise<Record<string, Business>> {
   const out: Record<string, Business> = {}
-  const missing = { google: [] as string[], dgis: [] as string[] }
+  const missing = { google: [] as string[], dgis: [] as string[], osm: [] as string[] }
   for (const r of refs) {
     const key = `${r.source}:${r.sourceId}`
     const hit = cache.get(`${level}|${lang}|${key}`) ?? (level === 'basic' ? cache.get(`full|${lang}|${key}`) : undefined)
     if (hit) out[key] = hit
     else if (r.source === 'google') missing.google.push(r.sourceId)
     else if (r.source === '2gis') missing.dgis.push(r.sourceId)
+    else if (r.source === 'osm') missing.osm.push(r.sourceId)
   }
 
   const gKey = env('GOOGLE_PLACES_API_KEY')
@@ -46,6 +48,13 @@ export async function getDetails(
   const dKey = env('DGIS_API_KEY')
   if (missing.dgis.length && dKey) {
     const items = await dgisDetails(dKey, missing.dgis, lang).catch(() => [])
+    for (const b of items) {
+      out[b.key] = b
+      cache.set(`full|${lang}|${b.key}`, b)
+    }
+  }
+  if (missing.osm.length) {
+    const items = await osmDetails(missing.osm).catch(() => [])
     for (const b of items) {
       out[b.key] = b
       cache.set(`full|${lang}|${b.key}`, b)

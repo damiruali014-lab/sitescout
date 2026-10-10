@@ -41,6 +41,11 @@ export function scoreLead(b: Business, check?: SiteCheck | 'pending'): LeadScore
     reasons.push(b.contactsHidden ? 'Website unknown (contacts hidden by 2GIS key)' : 'Website not checked yet')
   }
 
+  if (b.source === 'osm' && b.rating == null) {
+    // OpenStreetMap has no ratings — neutral points so map-only leads aren't buried. "Check on Google" adds real ones.
+    score += 18
+    reasons.push('No rating data yet (OpenStreetMap) — use “Check on Google”')
+  }
   const r = b.rating ?? 0
   const rPts = r >= 4.7 ? 20 : r >= 4.5 ? 16 : r >= 4.0 ? 11 : r >= 3.5 ? 5 : 0
   score += rPts

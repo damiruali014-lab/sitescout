@@ -644,6 +644,7 @@ main {
 }
 .lead-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* phones: never wider than the screen (the site preview is wide) */
   gap: 16px;
   align-items: start;
 }
@@ -1553,4 +1554,26 @@ main {
   .topbar-crowded .brand span {
     display: none;
   }
+}
+
+/* Step 17–19: "Already has a website somewhere?" card */
+.verify-row {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.verify-row .row {
+  flex-wrap: wrap;
+}
+.verify-row .input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
 }

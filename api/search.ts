@@ -4,6 +4,8 @@ import { resolveCategory } from './_lib/categories.js'
 import { findCountry, MAX_RESULTS } from './_lib/countries.js'
 import { dgisSearch, isKazakhCity } from './_lib/dgis.js'
 import { googleSearch } from './_lib/google.js'
+import { osmSearch } from './_lib/osm.js'
+import { hiddenKeys } from './_lib/hidden.js'
 import { clientIp, env, error, json } from './_lib/http.js'
 import { flushUsage } from './_lib/usage.js'
 import { withPhoneTypes } from './_lib/phone.js'
@@ -11,7 +13,7 @@ import { rateLimited } from './_lib/ratelimit.js'
 import type { SearchRequest, SearchResponse } from './_lib/types.js'
 import { cleanLang, cleanText, readJson } from './_lib/validate.js'
 
-export const config = { maxDuration: 30 }
+export const config = { maxDuration: 60 }
 
 // 10-minute dedupe cache (per warm instance). Not a long-term store — see google.ts.
 const cache = new TtlCache<SearchResponse>(10 * 60 * 1000, 100)
@@ -32,10 +34,10 @@ async function handle(request: Request): Promise<Response> {
 
   const googleKey = env('GOOGLE_PLACES_API_KEY')
   const dgisKey = env('DGIS_API_KEY')
-  let provider = body?.provider ?? 'auto'
+  let provider = (['auto', 'google', '2gis', 'osm'] as const).find((p) => p === body?.provider) ?? 'auto'
   if (provider === 'auto') {
-    const wants2gis = country ? country.provider === '2gis' : isKazakhCity(city)
-    provider = wants2gis && dgisKey ? '2gis' : 'google'
+    const preferred = country?.provider ?? (isKazakhCity(city) ? '2gis' : 'google')
+    provider = preferred === '2gis' && !dgisKey ? 'google' : preferred
   }
 
   const cacheKey = [provider, country?.code ?? '', city, category, lang, limit, page ?? ''].join('|').toLowerCase()
@@ -43,8 +45,14 @@ async function handle(request: Request): Promise<Response> {
   if (hit) return json({ ...hit, cached: true })
 
   try {
+    // Businesses I marked "already has a website" never come back (step 19).
+    const hidden = await hiddenKeys()
     let result: SearchResponse
-    if (provider === '2gis') {
+    if (provider === 'osm') {
+      const cat = resolveCategory(category, 'osm')
+      if (!cat.osm?.length) return error('OpenStreetMap needs a category from the list — or switch the source to Google.')
+      result = await osmSearch({ city, country: country?.code, filters: cat.osm, label: cat.label ?? category, limit, startIndex: page ? Number(page) || 0 : 0, skip: hidden })
+    } else if (provider === '2gis') {
       if (!dgisKey) return error('DGIS_API_KEY is not set on the server.', 503)
       const cat = resolveCategory(category, '2gis')
       result = await dgisSearch(dgisKey, { city, category: cat.q, rubricId: cat.rubricId, lang, limit, startPage: page ? Number(page) || 1 : 1 })
@@ -62,7 +70,12 @@ async function handle(request: Request): Promise<Response> {
         regionCode: country?.code,
       })
     }
-    result = { ...result, results: withPhoneTypes(result.results, country?.code ?? (provider === '2gis' ? 'KZ' : undefined)) }
+    const shown = result.results.filter((b) => !hidden.has(b.key))
+    result = {
+      ...result,
+      results: withPhoneTypes(shown, country?.code ?? (provider === '2gis' ? 'KZ' : undefined)),
+      hidden: (result.hidden ?? 0) + result.results.length - shown.length,
+    }
     cache.set(cacheKey, result)
     return json(result)
   } catch (e) {

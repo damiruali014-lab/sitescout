@@ -4,6 +4,8 @@ import { scoreLead } from '../../api/_lib/score'
 import { DemoPageCard } from '../components/DemoPageCard'
 import { MessageCard } from '../components/MessageCard'
 import { TrackerCard } from '../components/TrackerCard'
+import { VerifyCard } from '../components/VerifyCard'
+import type { Business } from '../../api/_lib/types'
 import { ArrowLeftIcon, ClockIcon, ExternalIcon, GlobeIcon, PhoneIcon, PinIcon } from '../components/Icons'
 import { Rating } from '../components/LeadCard'
 import { ScoreBadge } from '../components/ScoreBadge'
@@ -20,7 +22,10 @@ export function LeadPage() {
   const { mode } = useMode()
   const s = useSearchState()
   const live = mode === 'live' && !key.startsWith('demo:')
-  const { business: b, loading, error } = useBusiness(key, s.lang, live)
+  const { business: base, loading, error } = useBusiness(key, s.lang, live)
+  // Facts found on this page (Google rating for map-only leads, website from Instagram) — shown, not stored.
+  const [extra, setExtra] = useState<{ key: string; patch: Partial<Business> }>()
+  const b = base && extra?.key === key ? { ...base, ...extra.patch } : base
   const check = s.checks[key]
   const tracker = useTracker(live)
   const tracked = tracker.leads.find((l) => l.key === key)
@@ -28,8 +33,8 @@ export function LeadPage() {
 
   // Opened directly (e.g. from the tracker)? Run the website check for this one lead.
   useEffect(() => {
-    if (b) void ensureChecks([b], live ? 'live' : 'demo')
-  }, [b, live])
+    if (base) void ensureChecks([base], live ? 'live' : 'demo')
+  }, [base, live])
 
   if (loading) return <div className="empty">Loading lead…</div>
   if (!b)
@@ -96,6 +101,19 @@ export function LeadPage() {
               </div>
             )}
           </section>
+
+          {(
+            <VerifyCard
+              key={b.key}
+              business={b}
+              live={live}
+              onEnrich={(patch) => {
+                setExtra((x) => ({ key, patch: { ...(x?.key === key ? x.patch : {}), ...patch } }))
+                // A website turned up (Google / Instagram bio) → run the real website check on it.
+                if (patch.website && patch.website !== b.website) void recheck({ ...b, ...patch }, mode)
+              }}
+            />
+          )}
 
           <DemoPageCard
             business={b}
@@ -189,10 +207,10 @@ export function LeadPage() {
           </dl>
           {b.mapsUrl && (
             <a className="btn btn-sm" href={b.mapsUrl} target="_blank" rel="noreferrer">
-              <ExternalIcon size={14} /> {b.source === '2gis' ? 'Open in 2GIS' : 'Open in Google Maps'}
+              <ExternalIcon size={14} /> {b.source === '2gis' ? 'Open in 2GIS' : b.source === 'osm' ? 'Open in OpenStreetMap' : 'Open in Google Maps'}
             </a>
           )}
-          <p className="small muted">{b.source === 'demo' ? 'Sample data — fictional business' : b.source === '2gis' ? 'Data © 2GIS' : 'Data © Google'}</p>
+          <p className="small muted">{b.source === 'demo' ? 'Sample data — fictional business' : b.source === '2gis' ? 'Data © 2GIS' : b.source === 'osm' ? 'Data © OpenStreetMap contributors' : 'Data © Google'}</p>
         </aside>
       </div>
     </div>

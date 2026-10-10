@@ -35,7 +35,7 @@ export type LeadInput = Pick<TrackedLead, 'source' | 'sourceId'> & Partial<Omit<
 
 interface Row {
   id: string
-  source: 'google' | '2gis'
+  source: 'google' | '2gis' | 'osm'
   source_id: string
   status: LeadStatus
   notes: string

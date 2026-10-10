@@ -19,7 +19,7 @@ export function useBusiness(key: string, lang: Lang, live: boolean) {
   const local = resolveLocal(key) ?? readSession<Business>(`details:${lang}:${key}`)
   const [source, ...rest] = key.split(':')
   const sourceId = rest.join(':')
-  const canFetch = !local && live && (source === 'google' || source === '2gis')
+  const canFetch = !local && live && (source === 'google' || source === '2gis' || source === 'osm')
   const [remote, setRemote] = useState<Remote>()
 
   useEffect(() => {

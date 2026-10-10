@@ -45,12 +45,15 @@ To try live mode locally, copy `.env.example` → `.env.local` and fill in the k
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API | Free plan. The anon key is public by design; RLS protects the data. |
 | `SUPABASE_SERVICE_ROLE_KEY` | same page | **Server only.** Never give it a `VITE_` prefix. |
 | `ALLOWED_EMAIL` | your login email | Only this account can call the paid endpoints. |
+| `IG_USER_ID`, `IG_ACCESS_TOKEN` (optional) | Meta developer app, see **Instagram check** below | Free (Graph API rate limits apply). |
+
+**OpenStreetMap** needs no key: Nominatim finds the city and Overpass finds the businesses. Both are free public services with fair-use limits, so results are cached for 30 minutes. It's the default source for European countries.
 
 API keys never reach the browser: every provider call goes through `/api/*`.
 
 ## 3. Supabase setup (about 5 minutes)
 
-1. Create a project, then open **SQL Editor** and run `supabase/migrations/001_demo_pages.sql` and `002_leads.sql`.
+1. Create a project, then open **SQL Editor** and run every file in `supabase/migrations/` in order (001 → 005). Paste the SQL itself, not the file name.
 2. **Authentication → Users → Add user**: create your own email + password.
 3. **Authentication → Sign In / Providers**: turn **off** "Allow new users to sign up".
 4. **Authentication → URL Configuration**: set the Site URL to your Vercel URL.
@@ -60,6 +63,18 @@ API keys never reach the browser: every provider call goes through `/api/*`.
 1. Push this repo to GitHub, then on Vercel choose **Add New → Project → Import**. The Vite framework is auto-detected.
 2. Add the environment variables from step 2 (Production + Preview).
 3. Deploy. If the variables are missing, the site still works in Demo mode.
+
+## Instagram check (optional, ~20 min)
+
+The lead page can read the **website in a business's Instagram bio** through the official Graph API ([Business Discovery](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/business-discovery)). It only works for public Business/Creator accounts.
+
+1. Switch your own Instagram to a **Professional** account and link it to a **Facebook Page**.
+2. At [developers.facebook.com](https://developers.facebook.com), create an app (type **Business**) and add **Instagram → API setup with Facebook login**.
+3. In **Graph API Explorer**, pick your app and grant `instagram_basic`, `instagram_manage_insights` and `pages_show_list`/`pages_read_engagement`. Generate a token, then exchange it for a **long-lived token** (60 days) in the Access Token Debugger.
+4. Run `me/accounts?fields=instagram_business_account` in the Explorer. The `instagram_business_account.id` (starts with `1784…`) is `IG_USER_ID`.
+5. Put `IG_USER_ID` and `IG_ACCESS_TOKEN` in Vercel → Environment Variables (and `.env.local`), then redeploy. The token expires after about 60 days; the page tells you when.
+
+Without it, the lead page shows an **Open profile** button so you can look at the bio yourself.
 
 ## 5. Embed on the portfolio (Live Stage)
 

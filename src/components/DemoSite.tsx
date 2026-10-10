@@ -27,7 +27,7 @@ export function DemoSite({ business: b, lang, content: c, attribution, inert, em
   const maps = b.mapsUrl ?? (b.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.name + ', ' + b.address)}` : undefined)
   const hours = localHours(b.hours, lang)
   const category = localCategory(b.category, lang)
-  const src = b.source === '2gis' ? '2GIS' : b.source === 'google' ? 'Google' : 'maps'
+  const src = b.source === '2gis' ? '2GIS' : b.source === 'google' ? 'Google' : b.source === 'osm' ? 'OpenStreetMap' : 'maps'
   const href = (url?: string) => (inert ? undefined : url)
   const style = { '--site-accent': theme.accent, '--site-soft': theme.soft, '--site-ink': theme.ink } as CSSProperties
   const primaryCta = wa ? `https://wa.me/${wa}` : phone ? `tel:${phone}` : maps

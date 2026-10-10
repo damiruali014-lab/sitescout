@@ -1,7 +1,7 @@
 import { env } from './http.js'
 
 /** Server-only Supabase REST calls with the service-role key (bypasses RLS — use carefully). */
-function cfg() {
+export function cfg() {
   const url = env('VITE_SUPABASE_URL')
   const key = env('SUPABASE_SERVICE_ROLE_KEY')
   if (!url || !key) throw new Error('Supabase is not configured on the server.')
@@ -10,7 +10,7 @@ function cfg() {
 
 export interface DemoPageRow {
   slug: string
-  source: 'google' | '2gis'
+  source: 'google' | '2gis' | 'osm'
   source_id: string
   lang: 'en' | 'ru' | 'kk'
   description: string

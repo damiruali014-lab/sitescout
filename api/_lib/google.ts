@@ -1,4 +1,4 @@
-import { mergeBranches } from './dedupe.js'
+import { mergeBranches, normaliseName } from './dedupe.js'
 import { track } from './usage.js'
 import type { Business, Lang, SearchResponse } from './types.js'
 
@@ -155,4 +155,30 @@ export async function googleDetails(
   )
   if (!res.ok) throw await googleError(res)
   return toBusiness((await res.json()) as GPlace)
+}
+
+/**
+ * "Check on Google" for a lead found on a free source (OpenStreetMap): ONE Text Search request
+ * (Enterprise SKU) for that exact business → rating, reviews, website, phone. Returns null if
+ * Google's first hit isn't the same business.
+ */
+export async function googleMatch(
+  apiKey: string,
+  b: { name: string; address?: string; city?: string },
+  lang: Lang,
+  regionCode?: string,
+): Promise<Business | null> {
+  const data = await searchPage(apiKey, {
+    textQuery: [b.name, b.address ?? b.city].filter(Boolean).join(', '),
+    pageSize: 1,
+    languageCode: lang,
+    ...(regionCode ? { regionCode: regionCode.toLowerCase() } : {}),
+  })
+  const p = data.places?.[0]
+  if (!p) return null
+  const words = (s: string) => new Set(normaliseName(s).split(' ').filter((w) => w.length > 2))
+  const a = words(b.name)
+  const g = words(p.displayName?.text ?? '')
+  const shared = [...a].filter((w) => g.has(w)).length
+  return shared > 0 || a.size === 0 ? toBusiness(p, b.city) : null
 }
