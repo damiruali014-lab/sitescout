@@ -36,6 +36,16 @@ export function LeadCard({ business: b, selected, onSelect, aside, footer }: Pro
               Chain · {b.branchCount} branches
             </span>
           )}
+          {b.phoneType === 'landline' && !b.whatsapp && (
+            <span className="badge" title="Landline numbers can't have WhatsApp — call, email or Instagram">
+              Landline · no WhatsApp
+            </span>
+          )}
+          {b.phoneType === 'mobile' && (
+            <span className="badge" title="Mobile number — WhatsApp is likely">
+              Mobile
+            </span>
+          )}
         </div>
         {b.address && (
           <p className="lead-address muted small">

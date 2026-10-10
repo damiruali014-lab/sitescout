@@ -26,7 +26,10 @@ const CHANNELS: { value: Channel; label: string }[] = [
 export function MessageCard({ business: b, check, live, onSent }: Props) {
   const s = useSearchState()
   const [lang, setLang] = useState<Lang>(s.lang)
-  const [channel, setChannel] = useState<Channel>(b.instagram && !b.phone ? 'instagram' : 'whatsapp')
+  const landline = b.phoneType === 'landline' && !b.whatsapp
+  const [channel, setChannel] = useState<Channel>(
+    (b.instagram && (!b.phone || landline)) ? 'instagram' : landline && b.email ? 'email' : 'whatsapp',
+  )
   const [msg, setMsg] = useState<OutreachMessage & { source?: string }>()
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string>()
@@ -51,7 +54,7 @@ export function MessageCard({ business: b, check, live, onSent }: Props) {
   }
 
   const full = msg ? (msg.subject ? `${msg.subject}\n\n${msg.body}` : msg.body) : ''
-  const waNumber = (b.whatsapp ?? b.phone)?.replace(/\D/g, '')
+  const waNumber = landline ? undefined : (b.whatsapp ?? b.phone)?.replace(/\D/g, '')
   const igHandle = b.instagram?.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '')
 
   return (
@@ -69,6 +72,12 @@ export function MessageCard({ business: b, check, live, onSent }: Props) {
         ))}
       </div>
 
+      {channel === 'whatsapp' && landline && (
+        <p className="small banner" role="note">
+          <strong>{b.phone}</strong> is a landline, so it can’t have WhatsApp. Call them instead
+          {b.instagram || b.email ? ', or switch to Instagram / Email above' : ' — or find their Instagram'}.
+        </p>
+      )}
       {!link ? (
         <p className="small muted">Publish the demo page above first — the message links to it.</p>
       ) : !msg ? (

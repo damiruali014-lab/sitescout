@@ -6,6 +6,7 @@ import { dgisSearch, isKazakhCity } from './_lib/dgis.js'
 import { googleSearch } from './_lib/google.js'
 import { clientIp, env, error, json } from './_lib/http.js'
 import { flushUsage } from './_lib/usage.js'
+import { withPhoneTypes } from './_lib/phone.js'
 import { rateLimited } from './_lib/ratelimit.js'
 import type { SearchRequest, SearchResponse } from './_lib/types.js'
 import { cleanLang, cleanText, readJson } from './_lib/validate.js'
@@ -61,6 +62,7 @@ async function handle(request: Request): Promise<Response> {
         regionCode: country?.code,
       })
     }
+    result = { ...result, results: withPhoneTypes(result.results, country?.code ?? (provider === '2gis' ? 'KZ' : undefined)) }
     cache.set(cacheKey, result)
     return json(result)
   } catch (e) {

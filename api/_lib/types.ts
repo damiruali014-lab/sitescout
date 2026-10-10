@@ -3,6 +3,7 @@
 export type Source = 'google' | '2gis' | 'demo'
 export type Provider = 'auto' | 'google' | '2gis'
 export type Lang = 'en' | 'ru' | 'kk'
+export type PhoneType = 'mobile' | 'landline' | 'unknown'
 
 export interface Business {
   /** Stable key: `${source}:${sourceId}` */
@@ -14,6 +15,8 @@ export interface Business {
   category?: string
   address?: string
   phone?: string
+  /** mobile → WhatsApp possible; landline → no WhatsApp (call / email / Instagram instead) */
+  phoneType?: PhoneType
   website?: string
   /** Extra contact channels (2GIS often lists these) */
   instagram?: string

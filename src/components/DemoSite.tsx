@@ -23,7 +23,7 @@ export function DemoSite({ business: b, lang, content: c, attribution, inert, em
   const theme = SITE_THEMES[group]
   const vars = { owner: OWNER_NAME, name: b.name }
   const phone = b.phone?.replace(/[^\d+]/g, '')
-  const wa = (b.whatsapp ?? b.phone)?.replace(/\D/g, '')
+  const wa = b.phoneType === 'landline' && !b.whatsapp ? undefined : (b.whatsapp ?? b.phone)?.replace(/\D/g, '')
   const maps = b.mapsUrl ?? (b.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.name + ', ' + b.address)}` : undefined)
   const hours = localHours(b.hours, lang)
   const category = localCategory(b.category, lang)
